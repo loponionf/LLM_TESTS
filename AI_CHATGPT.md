@@ -1,36 +1,39 @@
-# AI_CHATGPT.md — Working agreement for ChatGPT and local AI on this repository
+# AI_CHATGPT.md — Working agreement for ChatGPT and Claude Code with local AI on this repository
 
-This file documents how Jean-Paul, ChatGPT, and a local AI agent work together on this repository.
-It is intended as a stable handoff/reference document after new chats, context loss, local model resets, or pull-request reviews.
+This file documents how Jean-Paul, ChatGPT, and Claude Code using a local AI backend work together on this repository.
+It is intended as a stable handoff/reference document after new chats, systematic `/clear`, local model resets, or pull-request reviews.
 
-The repository is expected to be used as an experiment harness: ChatGPT prepares the work, Jean-Paul relays prompts to a local AI, the local AI implements and opens a pull request, then ChatGPT reviews the pull request before anything is accepted.
+The repository is expected to be used as an experiment harness: ChatGPT prepares the work, Jean-Paul relays prompts to Claude Code, Claude Code uses a local AI backend to implement and open a pull request, then ChatGPT reviews the pull request before anything is accepted.
 
 ## 1. Role split
 
 ### Jean-Paul
 
 - Owns the repository and decides what is acceptable in practice.
-- Runs the local AI agent and gives it the prompts prepared by ChatGPT.
+- Runs Claude Code configured to use a local AI backend.
+- Performs a `/clear` systematically before giving Claude Code a new task, unless explicitly stated otherwise.
+- Gives Claude Code the self-contained prompts prepared by ChatGPT.
 - Performs real-world/manual validation when needed.
 - Shares PR number/link, logs, screenshots, diffs, or test results with ChatGPT for review.
-- Does not have to preserve local AI chat history; prompts should be self-contained.
+- Does not have to preserve Claude Code chat history; prompts should be self-contained.
 
 ### ChatGPT
 
 - Frames work before implementation.
 - Creates or updates GitHub issues when asked.
-- Produces compact, self-contained prompts for the local AI.
-- Assumes the local AI has limited context and unreliable memory.
-- Reviews pull requests produced by the local AI.
+- Produces compact, self-contained prompts for Claude Code using a local AI backend.
+- Assumes Claude Code has just been reset with `/clear` before each task.
+- Assumes the local AI backend has limited context and unreliable memory.
+- Reviews pull requests produced by Claude Code.
 - Checks scope, diff quality, tests, regressions, and issue acceptance criteria.
 - Merges the pull request when the review is acceptable and the project workflow allows it.
 - Closes the related GitHub issue after the PR is merged and acceptance evidence is sufficient.
 - Does not pretend manual validation was done; Jean-Paul performs real tests.
 
-### Local AI agent
+### Claude Code with local AI backend
 
 - Receives one narrow task at a time.
-- Must not rely on prior chat history.
+- Must not rely on prior chat history, because Jean-Paul normally runs `/clear` before each task.
 - Must read the repository files needed for the task before editing.
 - Must make small, surgical changes.
 - Must run relevant tests when possible.
@@ -38,14 +41,16 @@ The repository is expected to be used as an experiment harness: ChatGPT prepares
 - Must report the pull request number explicitly, in addition to the PR URL.
 - Must report exactly what changed, what was tested, and what remains risky.
 
-## 2. Core principle for local AI prompts
+## 2. Core principle for Claude Code prompts
 
-The local AI has a short context window and a “goldfish memory”.
+Claude Code is used as the coding agent, but the model behind it is a local AI backend with a short context window and a “goldfish memory”.
+Jean-Paul normally runs `/clear` before every new task.
 Therefore every implementation prompt must be explicit, narrow, and self-contained.
 
-A local AI prompt should never assume that the model remembers:
+A Claude Code prompt should never assume that the model remembers:
 
 - previous chats;
+- previous Claude Code context;
 - previous instructions;
 - previous repository analysis;
 - the issue context unless repeated in the prompt;
@@ -55,7 +60,8 @@ A local AI prompt should never assume that the model remembers:
 Default rule:
 
 ```text
-One prompt = one atomic task = one branch/PR.
+/clear before each task
+one prompt = one atomic task = one branch/PR
 ```
 
 If the task is too large to fit in one prompt, ChatGPT should split it into smaller GitHub issues or implementation steps.
@@ -68,13 +74,14 @@ Preferred pattern:
 Idea or bug
 → ChatGPT clarifies scope
 → ChatGPT creates/updates a GitHub issue when useful
-→ ChatGPT prepares a local-AI prompt
-→ Jean-Paul gives the prompt to the local AI
-→ Local AI creates a branch, implements, tests, commits, pushes, and opens a PR
-→ Local AI reports the PR number and PR URL
+→ ChatGPT prepares a self-contained Claude Code prompt
+→ Jean-Paul runs /clear in Claude Code
+→ Jean-Paul gives the prompt to Claude Code
+→ Claude Code uses the local AI backend to create a branch, implement, test, commit, push, and open a PR
+→ Claude Code reports the PR number and PR URL
 → Jean-Paul gives the PR number/link to ChatGPT
 → ChatGPT reviews the PR
-→ Local AI fixes review findings if needed
+→ Claude Code fixes review findings if needed, again from a self-contained prompt after /clear unless told otherwise
 → Jean-Paul performs real validation when needed
 → ChatGPT merges the PR when acceptable
 → ChatGPT closes the related issue when evidence is sufficient
@@ -91,17 +98,18 @@ For development tasks, prefer:
 - no broad refactor unless the issue explicitly requires it;
 - clear PR description with test evidence.
 
-## 4. Prompt style for the local AI
+## 4. Prompt style for Claude Code with local AI backend
 
-Prompts for the local AI should be compact, structured, and usually in English.
+Prompts should be compact, structured, and usually in English.
 Conversation with Jean-Paul can remain in French.
 
-A good local-AI prompt contains:
+A good Claude Code prompt contains:
 
 ```text
 Context
 Repository
 Issue / goal
+Post-/clear assumption
 Current constraints
 Files to inspect first
 Implementation scope
@@ -114,7 +122,8 @@ Final report format
 
 Important prompt rules:
 
-- Assume the local AI has no memory.
+- Assume Claude Code has just had `/clear`.
+- Assume the local AI backend has no memory.
 - Repeat all important constraints inside the prompt.
 - Tell it exactly which files or areas to inspect first.
 - Tell it not to edit before inspecting relevant files.
@@ -127,16 +136,19 @@ Important prompt rules:
 - Tell it not to close GitHub issues by itself unless explicitly asked.
 - Tell it to include test results and remaining risks in the PR body or final report.
 
-## 5. Standard local AI implementation prompt template
+## 5. Standard Claude Code implementation prompt template
 
-Use this template when ChatGPT prepares work for the local AI.
+Use this template when ChatGPT prepares work for Claude Code using a local AI backend.
 
 ```text
 You are working in the GitHub repository:
 - <owner/repo>
 
-You have limited context and must not rely on previous chat history.
-Read the files requested below before modifying anything.
+Important context:
+- Jean-Paul has just run /clear in Claude Code.
+- You must not rely on any previous chat history or previous Claude Code context.
+- You are using a local AI backend with limited context, so keep the task narrow and verify files directly.
+- Read the files requested below before modifying anything.
 
 Goal:
 - <clear one-sentence goal>
@@ -180,7 +192,7 @@ PR/report requirements:
 - Any remaining risks or unmet acceptance criteria.
 ```
 
-## 6. Analysis-only local AI prompt template
+## 6. Analysis-only Claude Code prompt template
 
 Use this when implementation would be risky without first understanding the code.
 
@@ -188,7 +200,11 @@ Use this when implementation would be risky without first understanding the code
 You are working in the GitHub repository:
 - <owner/repo>
 
-You have limited context and must not rely on previous chat history.
+Important context:
+- Jean-Paul has just run /clear in Claude Code.
+- You must not rely on any previous chat history or previous Claude Code context.
+- You are using a local AI backend with limited context, so inspect only the requested files unless more context is truly needed.
+
 This is analysis only.
 
 Goal:
@@ -214,7 +230,7 @@ Report:
 
 ## 7. Pull request review policy
 
-ChatGPT reviews local-AI pull requests before they are accepted.
+ChatGPT reviews Claude Code pull requests before they are accepted.
 
 The review should check:
 
@@ -227,7 +243,7 @@ The review should check:
 - Does the diff introduce fragile heuristics, duplicated logic, or hidden global changes?
 - Is manual validation needed before closing the issue?
 
-If the PR is incomplete, ChatGPT should request changes clearly and provide a corrective prompt for the local AI.
+If the PR is incomplete, ChatGPT should request changes clearly and provide a corrective prompt for Claude Code. Because Jean-Paul normally uses `/clear`, corrective prompts should also be self-contained.
 
 If the PR is acceptable, ChatGPT can merge it when the repository policy allows it, then close the related issue if acceptance evidence is sufficient.
 
@@ -240,7 +256,7 @@ Create an issue when:
 - a bug or feature should survive chat history loss;
 - a task needs a PR;
 - a validation reveals a distinct bug;
-- a larger idea should be split into atomic local-AI tasks;
+- a larger idea should be split into atomic Claude Code tasks;
 - a future improvement should not be mixed into the current PR.
 
 Issue bodies should include:
@@ -265,8 +281,8 @@ Close an issue only when:
 Default closure owner:
 
 ```text
-Local AI implements and opens a PR.
-Local AI reports the PR number and PR URL.
+Claude Code implements and opens a PR.
+Claude Code reports the PR number and PR URL.
 ChatGPT reviews the PR.
 ChatGPT merges the PR when acceptable.
 Jean-Paul validates when needed.
@@ -304,7 +320,7 @@ Related issue
 Risks / follow-ups
 ```
 
-The local AI final response must include:
+Claude Code's final response must include:
 
 ```text
 PR: #<number>
@@ -312,9 +328,9 @@ PR URL: <url>
 Commit SHA: <sha>
 ```
 
-## 10. Local AI safety rules
+## 10. Claude Code / local AI safety rules
 
-The local AI must avoid:
+Claude Code with local AI backend must avoid:
 
 - inventing repository state;
 - claiming tests passed without running them;
@@ -327,7 +343,7 @@ The local AI must avoid:
 - force-pushing over unrelated work;
 - hiding uncertainty.
 
-When uncertain, the local AI should stop and report:
+When uncertain, Claude Code should stop and report:
 
 ```text
 What I inspected
@@ -338,12 +354,12 @@ What I recommend next
 
 ## 11. ChatGPT response pattern for this repository
 
-When Jean-Paul asks for a task to be sent to the local AI, ChatGPT should usually provide:
+When Jean-Paul asks for a task to be sent to Claude Code, ChatGPT should usually provide:
 
 ```text
 1. A concise French explanation for Jean-Paul.
 2. The recommended GitHub issue title/body if needed.
-3. A compact English prompt for the local AI.
+3. A compact English prompt for Claude Code, self-contained after /clear.
 4. A review checklist for the future PR.
 ```
 
@@ -368,8 +384,9 @@ The expected loop is:
 
 ```text
 ChatGPT = planner / reviewer / merger / issue manager
-Local AI = constrained implementer with short memory
+Claude Code = coding agent
+Local AI backend = constrained model with short memory
 Jean-Paul = operator / validator / final decision maker
 ```
 
-Keep tasks small enough that a local model can succeed without needing a long-lived memory.
+Keep tasks small enough that Claude Code using the local model can succeed after a fresh `/clear`.
