@@ -176,10 +176,9 @@ export function startGravityLoop(board, state, refresh) {
   gravityLoopLevel = state.level;
   gravityIntervalId = setInterval(() => {
     if (state.paused || state.gameOver || !state.activePiece) return;
-    const beforeLevel = state.level;
     moveDown(board, state);
     refresh();
-    if (state.level !== beforeLevel && !state.paused && !state.gameOver) {
+    if (state.level !== gravityLoopLevel && !state.paused && !state.gameOver) {
       restartGravityLoop(board, state, refresh);
     }
   }, delay);
