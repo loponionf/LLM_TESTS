@@ -308,6 +308,34 @@ In a structurally unsafe PR, ChatGPT may close the PR and ask for a fresh branch
 
 In a normal code/test error, preserve the useful work and produce a narrow fix.
 
+### Rejected PR rule for local AI continuity
+
+When a PR is wrong but Claude Code still has a useful local working state, ChatGPT should prefer closing/rejecting the PR without asking Claude Code to resynchronize first.
+
+Rationale: with a local AI backend, forcing an immediate `git fetch`, `checkout main`, or `pull` can destroy the useful local context and cause the model to rediscover or resend too much work.
+
+Preferred rejection workflow:
+
+```text
+PR is wrong or rejected
+→ ChatGPT closes or marks the PR as rejected
+→ ChatGPT does not ask Claude Code to sync, fetch, pull, or checkout main
+→ Claude Code keeps its current local branch and files
+→ Claude Code applies only the requested local fix
+→ Claude Code commits
+→ Claude Code opens a new clean PR
+→ ChatGPT reviews the new PR
+```
+
+Use this when:
+
+- the local branch is likely still useful;
+- the error is localized or reviewable;
+- asking for a resync would waste local-model context;
+- the goal is to keep Claude Code's current sources and avoid re-sending the whole task.
+
+Only ask Claude Code to resynchronize from `main` when the PR or branch is structurally unsafe, based on the structural-safety criteria above.
+
 ## 9. Rollback and task-splitting rule
 
 When a PR is so flawed that the work must be restarted, ChatGPT must not simply ask Claude Code to redo the same large task.
@@ -613,6 +641,16 @@ When Jean-Paul provides a blocked/failing-test PR, ChatGPT should:
 4. Ask for a fresh branch only when the branch/history/scope is structurally unsafe.
 5. If everything must be restarted, split the task into smaller tasks before retrying.
 6. Avoid asking Claude Code to rediscover context already visible in the PR.
+```
+
+When a PR is rejected but the local branch is useful, ChatGPT should:
+
+```text
+1. Close or mark the PR as rejected.
+2. Do not ask Claude Code to sync, fetch, pull, or checkout main.
+3. Tell Claude Code to keep its current local branch and files.
+4. Ask for only the minimal local correction.
+5. Have Claude Code commit and open a new PR.
 ```
 
 When the project becomes large or unclear, ChatGPT should prefer creating a mapping issue before asking Claude Code for implementation.
