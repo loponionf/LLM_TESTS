@@ -148,8 +148,9 @@ export function lockAndSpawn(board, state) {
   }
 }
 
-// Module-level interval id for the gravity loop.
+// Module-level interval id and level tracker for the gravity loop.
 let gravityIntervalId = null;
+let gravityLoopLevel = null;
 
 /**
  * Compute the gravity delay in ms for a given level.
@@ -172,10 +173,15 @@ export function getGravityDelay(level) {
 export function startGravityLoop(board, state, refresh) {
   stopGravityLoop();
   const delay = getGravityDelay(state.level);
+  gravityLoopLevel = state.level;
   gravityIntervalId = setInterval(() => {
     if (state.paused || state.gameOver || !state.activePiece) return;
+    const beforeLevel = state.level;
     moveDown(board, state);
     refresh();
+    if (state.level !== beforeLevel && !state.paused && !state.gameOver) {
+      restartGravityLoop(board, state, refresh);
+    }
   }, delay);
 }
 
@@ -187,6 +193,7 @@ export function stopGravityLoop() {
     clearInterval(gravityIntervalId);
     gravityIntervalId = null;
   }
+  gravityLoopLevel = null;
 }
 
 /**
