@@ -29,6 +29,7 @@ The repository is expected to be used as an experiment harness: ChatGPT prepares
 - Checks scope, diff quality, tests, regressions, and issue acceptance criteria.
 - Guides the next corrective prompt when a PR is blocked by failing tests or uncertainty.
 - Prefer targeted corrective PRs for code/test errors instead of discarding useful work.
+- When a PR is unrecoverable, explicitly instruct rollback/abandon and split the work into smaller tasks before retrying.
 - Merges the pull request when the review is acceptable and the project workflow allows it.
 - Closes the related GitHub issue after the PR is merged and acceptance evidence is sufficient.
 - Does not pretend manual validation was done; Jean-Paul performs real tests.
@@ -297,7 +298,44 @@ In a structurally unsafe PR, ChatGPT may close the PR and ask for a fresh branch
 
 In a normal code/test error, preserve the useful work and produce a narrow fix.
 
-## 9. Progressive project mapping
+## 9. Rollback and task-splitting rule
+
+When a PR is so flawed that the work must be restarted, ChatGPT must not simply ask Claude Code to redo the same large task.
+
+If everything must be taken back, ChatGPT should:
+
+1. State clearly that the current PR is not salvageable.
+2. Explain whether the branch should be abandoned, closed, reverted, or reset.
+3. Identify the smallest safe rollback point.
+4. Split the original task into two or more smaller independent tasks.
+5. Create or update GitHub issues for the smaller tasks when useful.
+6. Provide the next prompt for only the first smaller task.
+
+Use this path when:
+
+- the PR combines too many responsibilities;
+- the model misunderstood the architecture;
+- the patch rewrites unrelated code;
+- the implementation is too tangled to review safely;
+- the failure suggests the task was too broad for the local AI context;
+- a targeted correction would be more complex than a clean smaller retry.
+
+Preferred retry pattern:
+
+```text
+bad broad PR
+→ close or abandon it with reason
+→ split original issue into smaller issue A and issue B
+→ run /clear
+→ implement issue A only
+→ review/merge issue A
+→ run /clear
+→ implement issue B only
+```
+
+When instructing rollback, be explicit and safe. Avoid destructive commands unless necessary. Prefer abandoning a bad branch/PR over rewriting shared history.
+
+## 10. Progressive project mapping
 
 For larger repositories, ChatGPT should progressively build a reliable understanding of the project through versioned mapping files committed to the repository.
 
@@ -388,7 +426,7 @@ Implementation prompts for large projects should normally ask Claude Code to rea
 
 Maps are guidance, not truth by themselves. Claude Code must still inspect the actual files it edits.
 
-## 10. Pull request review policy
+## 11. Pull request review policy
 
 ChatGPT reviews Claude Code pull requests before they are accepted.
 
@@ -412,7 +450,7 @@ If the PR is blocked by failing tests, ChatGPT should not merge it until the fai
 
 If the PR is acceptable, ChatGPT can merge it when the repository policy allows it, then close the related issue if acceptance evidence is sufficient.
 
-## 11. Issue policy
+## 12. Issue policy
 
 GitHub issues are the operational task tracker.
 
@@ -455,7 +493,7 @@ Jean-Paul validates when needed.
 ChatGPT updates/closes the related issue only after sufficient evidence.
 ```
 
-## 12. Branch and PR conventions
+## 13. Branch and PR conventions
 
 Prefer one branch per issue.
 
@@ -506,7 +544,7 @@ PR URL: <url>
 Commit SHA: <sha>
 ```
 
-## 13. Claude Code / local AI safety rules
+## 14. Claude Code / local AI safety rules
 
 Claude Code with local AI backend must avoid:
 
@@ -522,7 +560,8 @@ Claude Code with local AI backend must avoid:
 - hiding uncertainty;
 - writing architectural claims into maps without source evidence;
 - repeatedly guessing fixes for failing tests until context is exhausted;
-- discarding useful PR work just because one localized error exists.
+- discarding useful PR work just because one localized error exists;
+- retrying the same oversized task unchanged after a full failure.
 
 When uncertain, Claude Code should stop and report:
 
@@ -533,7 +572,7 @@ What I am unsure about
 What I recommend next
 ```
 
-## 14. ChatGPT response pattern for this repository
+## 15. ChatGPT response pattern for this repository
 
 When Jean-Paul asks for a task to be sent to Claude Code, ChatGPT should usually provide:
 
@@ -563,12 +602,13 @@ When Jean-Paul provides a blocked/failing-test PR, ChatGPT should:
 2. Decide whether the current PR should be fixed, replaced, or closed.
 3. Prefer a targeted corrective prompt when the PR is structurally safe.
 4. Ask for a fresh branch only when the branch/history/scope is structurally unsafe.
-5. Avoid asking Claude Code to rediscover context already visible in the PR.
+5. If everything must be restarted, split the task into smaller tasks before retrying.
+6. Avoid asking Claude Code to rediscover context already visible in the PR.
 ```
 
 When the project becomes large or unclear, ChatGPT should prefer creating a mapping issue before asking Claude Code for implementation.
 
-## 15. Repository-specific note
+## 16. Repository-specific note
 
 This repository is a testbed for experimenting with LLM-driven development.
 The process matters as much as the code.
