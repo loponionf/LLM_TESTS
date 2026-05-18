@@ -15,8 +15,9 @@ import {
  * Space key prevents page scroll.
  *
  * Safe to call multiple times — only attaches one listener per key/button.
+ * Re-calling with new callbacks updates the behavior for future events.
  *
- * @param {object} callbacks
+ * @param {object} [callbacks]
  * @param {Function} [callbacks.moveLeft]
  * @param {Function} [callbacks.moveRight]
  * @param {Function} [callbacks.softDrop]
@@ -25,33 +26,52 @@ import {
  * @param {Function} [callbacks.togglePause]
  * @param {Function} [callbacks.restart]
  */
+let currentCallbacks = {};
+let keyListenerAttached = false;
+let pauseListenerAttached = false;
+let restartListenerAttached = false;
+
+/**
+ * Safely invoke a callback if it is a function.
+ *
+ * @param {unknown} fn
+ * @returns {() => void}
+ */
+const safe = (fn) => (typeof fn === 'function' ? fn : () => {});
+
 export function setupInputHandlers(callbacks) {
-  const safe = (fn) => (typeof fn === 'function' ? fn : () => {});
+  currentCallbacks = callbacks || {};
 
-  const keyMap = {
-    [KEY_LEFT]: safe(callbacks.moveLeft),
-    [KEY_RIGHT]: safe(callbacks.moveRight),
-    [KEY_DOWN]: safe(callbacks.softDrop),
-    [KEY_UP]: safe(callbacks.rotate),
-    [KEY_SPACE]: safe(callbacks.hardDrop),
-  };
+  if (!keyListenerAttached) {
+    const handleKey = (e) => {
+      const fn = currentCallbacks[e.key];
+      if (fn) {
+        e.preventDefault();
+        safe(fn)();
+      }
+    };
 
-  const handleKey = (e) => {
-    if (e.key in keyMap) {
-      e.preventDefault();
-      keyMap[e.key]();
-    }
-  };
-
-  document.addEventListener('keydown', handleKey);
+    document.addEventListener('keydown', handleKey);
+    keyListenerAttached = true;
+  }
 
   const pauseBtn = document.getElementById('pause-btn');
-  if (pauseBtn) {
-    pauseBtn.addEventListener('click', safe(callbacks.togglePause));
+  if (pauseBtn && !pauseListenerAttached) {
+    document.addEventListener('click', (e) => {
+      if (e.target === pauseBtn) {
+        safe(currentCallbacks.togglePause)();
+      }
+    });
+    pauseListenerAttached = true;
   }
 
   const restartBtn = document.getElementById('restart-btn');
-  if (restartBtn) {
-    restartBtn.addEventListener('click', safe(callbacks.restart));
+  if (restartBtn && !restartListenerAttached) {
+    document.addEventListener('click', (e) => {
+      if (e.target === restartBtn) {
+        safe(currentCallbacks.restart)();
+      }
+    });
+    restartListenerAttached = true;
   }
 }
