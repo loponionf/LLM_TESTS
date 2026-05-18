@@ -1,8 +1,16 @@
 import { createBoard } from './board.js';
-import { createInitialState, resetGameState } from './gameState.js';
+import { createInitialState, resetGameState, togglePause } from './gameState.js';
 import { renderBoard, renderNextPiece, updateHUD } from './renderer.js';
 import { setupInputHandlers } from './input.js';
-import { moveLeft, moveRight, moveDown, hardDrop, rotatePiece } from './gameLoop.js';
+import {
+  moveLeft,
+  moveRight,
+  moveDown,
+  hardDrop,
+  rotatePiece,
+  startGravityLoop,
+  stopGravityLoop,
+} from './gameLoop.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const boardEl = document.getElementById('board');
@@ -44,13 +52,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Wire input callbacks
   setupInputHandlers({
-    moveLeft: () => { if (!state.gameOver) { moveLeft(board, state); refresh(); } },
-    moveRight: () => { if (!state.gameOver) { moveRight(board, state); refresh(); } },
-    softDrop: () => { if (!state.gameOver) { moveDown(board, state); refresh(); } },
-    hardDrop: () => { if (!state.gameOver) { hardDrop(board, state); refresh(); } },
-    rotate: () => { if (!state.gameOver) { rotatePiece(board, state); refresh(); } },
-    restart,
+    moveLeft: () => { if (!state.gameOver && !state.paused) { moveLeft(board, state); refresh(); } },
+    moveRight: () => { if (!state.gameOver && !state.paused) { moveRight(board, state); refresh(); } },
+    softDrop: () => { if (!state.gameOver && !state.paused) { moveDown(board, state); refresh(); } },
+    hardDrop: () => { if (!state.gameOver && !state.paused) { hardDrop(board, state); refresh(); } },
+    rotate: () => { if (!state.gameOver && !state.paused) { rotatePiece(board, state); refresh(); } },
+    togglePause: () => {
+      const wasPaused = togglePause(state);
+      refresh();
+      if (wasPaused) {
+        stopGravityLoop();
+      } else {
+        startGravityLoop(board, state, refresh);
+      }
+    },
+    restart: () => {
+      state = resetGameState();
+      board = createBoard();
+      stopGravityLoop();
+      refresh();
+      startGravityLoop(board, state, refresh);
+    },
   });
+
+  // Start automatic gravity
+  startGravityLoop(board, state, refresh);
 
   // Initial render
   refresh();

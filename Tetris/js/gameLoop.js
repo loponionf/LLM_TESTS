@@ -1,3 +1,8 @@
+import {
+  GRAVITY_INITIAL,
+  GRAVITY_MIN,
+  GRAVITY_STEP,
+} from './constants.js';
 import { isValidPosition, lockPiece as lockPieceBoard, clearLines } from './board.js';
 import { getTetromino } from './pieces.js';
 import { getRandomTetromino } from './pieces.js';
@@ -141,4 +146,58 @@ export function lockAndSpawn(board, state) {
   if (freshDef && !isValidPosition(board, freshDef, newActive.x, newActive.y, newActive.rotationIndex || 0)) {
     setGameOver(state);
   }
+}
+
+// Module-level interval id for the gravity loop.
+let gravityIntervalId = null;
+
+/**
+ * Compute the gravity delay in ms for a given level.
+ * @param {number} level
+ * @returns {number}
+ */
+export function getGravityDelay(level) {
+  return Math.max(GRAVITY_MIN, GRAVITY_INITIAL - (level - 1) * GRAVITY_STEP);
+}
+
+/**
+ * Start the automatic gravity loop.
+ * Each tick attempts to move the active piece down; if it cannot,
+ * lockAndSpawn handles locking and spawning a new piece.
+ *
+ * @param {Array<Array|null>} board
+ * @param {object} state - Game state object (read for paused/gameOver/level).
+ * @param {Function} refresh - Re-render function.
+ */
+export function startGravityLoop(board, state, refresh) {
+  stopGravityLoop();
+  const delay = getGravityDelay(state.level);
+  gravityIntervalId = setInterval(() => {
+    if (state.paused || state.gameOver || !state.activePiece) return;
+    moveDown(board, state);
+    refresh();
+  }, delay);
+}
+
+/**
+ * Stop the automatic gravity loop.
+ */
+export function stopGravityLoop() {
+  if (gravityIntervalId !== null) {
+    clearInterval(gravityIntervalId);
+    gravityIntervalId = null;
+  }
+}
+
+/**
+ * Restart the gravity loop with the current level's speed.
+ * Stops any existing interval first.
+ *
+ * @param {Array<Array|null>} board
+ * @param {object} state - Game state object.
+ * @param {Function} refresh - Re-render function.
+ */
+export function restartGravityLoop(board, state, refresh) {
+  stopGravityLoop();
+  startGravityLoop(board, state, refresh);
 }
