@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tetris V1</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="board" width="300" height="600"></canvas>
+
+    <div id="hud">
+      <div>Score: <span id="score">0</span></div>
+      <div>Level: <span id="level">1</span></div>
+      <div>Lines: <span id="lines">0</span></div>
+    </div>
+
+    <canvas id="next-piece" width="120" height="120"></canvas>
+
+    <button id="pause-btn">Pause</button>
+    <button id="restart-btn">Restart</button>
+
+    <div id="game-over" style="display:none;"></div>
+  </div>
+
+  <script type="module" src="js/constants.js"></script>
+  <script type="module" src="js/pieces.js"></script>
+  <script type="module" src="js/board.js"></script>
+  <script type="module" src="js/gameState.js"></script>
+  <script type="module" src="js/renderer.js"></script>
+  <script type="module" src="js/input.js"></script>
+  <script type="module" src="js/gameLoop.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
