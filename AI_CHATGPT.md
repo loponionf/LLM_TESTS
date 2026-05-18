@@ -27,6 +27,7 @@ The repository is expected to be used as an experiment harness: ChatGPT prepares
 - Builds and maintains a progressively versioned understanding of the repository through reviewed mapping files.
 - Reviews pull requests produced by Claude Code.
 - Checks scope, diff quality, tests, regressions, and issue acceptance criteria.
+- Guides the next corrective prompt when a PR is blocked by failing tests or uncertainty.
 - Merges the pull request when the review is acceptable and the project workflow allows it.
 - Closes the related GitHub issue after the PR is merged and acceptance evidence is sufficient.
 - Does not pretend manual validation was done; Jean-Paul performs real tests.
@@ -38,9 +39,10 @@ The repository is expected to be used as an experiment harness: ChatGPT prepares
 - Must read the repository files needed for the task before editing.
 - Must make small, surgical changes.
 - Must run relevant tests when possible.
-- Must commit, push, and open a pull request when asked.
+- Must not burn excessive local-model context on long failing-test diagnosis.
+- Must commit, push, and open a pull request when asked, even if the PR is blocked by failing tests, as long as the partial work is useful for review.
 - Must report the pull request number explicitly, in addition to the PR URL.
-- Must report exactly what changed, what was tested, and what remains risky.
+- Must report exactly what changed, what was tested, what failed, and what remains risky.
 
 ## 2. Core principle for Claude Code prompts
 
@@ -136,6 +138,7 @@ Important prompt rules:
 - Tell it to return the pull request number explicitly, for example `PR: #12`.
 - Tell it not to close GitHub issues by itself unless explicitly asked.
 - Tell it to include test results and remaining risks in the PR body or final report.
+- Tell it to stop prolonged failing-test diagnosis and open a blocked PR with logs when it cannot quickly resolve the failure.
 
 ## 5. Standard Claude Code implementation prompt template
 
@@ -179,14 +182,17 @@ Tasks:
 4. Add or update focused tests if appropriate.
 5. Run the focused tests.
 6. Run broader tests if feasible.
-7. Commit the changes with a clear message.
-8. Push the branch.
-9. Open a pull request against `<base-branch>`.
-10. Return the pull request number explicitly in your final response, for example `PR: #12`.
+7. If tests fail, make one focused correction attempt only when the cause is obvious.
+8. If tests still fail or diagnosis becomes unclear, stop diagnosis, keep the useful work, and document the failure logs in the PR/report.
+9. Commit the changes with a clear message.
+10. Push the branch.
+11. Open a pull request against `<base-branch>` even if it is blocked by failing tests, marking it clearly as blocked/failing if needed.
+12. Return the pull request number explicitly in your final response, for example `PR: #12`.
 
 PR/report requirements:
 - Summary of changed files.
 - Tests run and exact result.
+- If tests failed: exact failing command, relevant error excerpt, and what was attempted.
 - Commit SHA.
 - Pull request number, in the exact form `PR: #<number>`.
 - PR URL.
@@ -229,7 +235,28 @@ Report:
 - Suggested tests.
 ```
 
-## 7. Progressive project mapping
+## 7. Failing-test and blocked-PR handoff rule
+
+Claude Code must not spend excessive local-model context trying to solve unclear failing tests.
+
+When a test/build failure appears:
+
+1. Capture the exact command.
+2. Capture the relevant error excerpt.
+3. Make at most one focused fix attempt if the cause is obvious.
+4. If the failure persists or the cause is unclear, stop diagnosis.
+5. Commit the useful work if it is coherent.
+6. Push the branch.
+7. Open a PR marked clearly as blocked/failing tests.
+8. Report `PR: #<number>`, PR URL, commit SHA, failing command, and error excerpt.
+
+ChatGPT will then review the PR and prepare the next corrective prompt after `/clear`.
+
+This rule exists to preserve local AI context and avoid low-quality speculative debugging.
+
+Blocked PRs must not be merged until ChatGPT review confirms the issue is understood and the acceptance criteria are met.
+
+## 8. Progressive project mapping
 
 For larger repositories, ChatGPT should progressively build a reliable understanding of the project through versioned mapping files committed to the repository.
 
@@ -320,7 +347,7 @@ Implementation prompts for large projects should normally ask Claude Code to rea
 
 Maps are guidance, not truth by themselves. Claude Code must still inspect the actual files it edits.
 
-## 8. Pull request review policy
+## 9. Pull request review policy
 
 ChatGPT reviews Claude Code pull requests before they are accepted.
 
@@ -334,13 +361,16 @@ The review should check:
 - Is the PR description honest about risks?
 - Does the diff introduce fragile heuristics, duplicated logic, or hidden global changes?
 - Is manual validation needed before closing the issue?
+- For blocked/failing-test PRs: is the failure documented clearly enough for ChatGPT to guide the next prompt?
 - For mapping PRs: do the map claims match the inspected source files, and are hypotheses/unknowns labelled correctly?
 
 If the PR is incomplete, ChatGPT should request changes clearly and provide a corrective prompt for Claude Code. Because Jean-Paul normally uses `/clear`, corrective prompts should also be self-contained.
 
+If the PR is blocked by failing tests, ChatGPT should not merge it until the failure is understood and resolved or explicitly accepted as non-blocking.
+
 If the PR is acceptable, ChatGPT can merge it when the repository policy allows it, then close the related issue if acceptance evidence is sufficient.
 
-## 9. Issue policy
+## 10. Issue policy
 
 GitHub issues are the operational task tracker.
 
@@ -383,7 +413,7 @@ Jean-Paul validates when needed.
 ChatGPT updates/closes the related issue only after sufficient evidence.
 ```
 
-## 10. Branch and PR conventions
+## 11. Branch and PR conventions
 
 Prefer one branch per issue.
 
@@ -416,6 +446,16 @@ Related issue
 Risks / follow-ups
 ```
 
+If tests fail, PR descriptions should additionally include:
+
+```text
+Blocked status
+Failing command
+Relevant error excerpt
+What was attempted
+Suggested next step
+```
+
 Claude Code's final response must include:
 
 ```text
@@ -424,7 +464,7 @@ PR URL: <url>
 Commit SHA: <sha>
 ```
 
-## 11. Claude Code / local AI safety rules
+## 12. Claude Code / local AI safety rules
 
 Claude Code with local AI backend must avoid:
 
@@ -438,7 +478,8 @@ Claude Code with local AI backend must avoid:
 - closing issues without instruction;
 - force-pushing over unrelated work;
 - hiding uncertainty;
-- writing architectural claims into maps without source evidence.
+- writing architectural claims into maps without source evidence;
+- repeatedly guessing fixes for failing tests until context is exhausted.
 
 When uncertain, Claude Code should stop and report:
 
@@ -449,7 +490,7 @@ What I am unsure about
 What I recommend next
 ```
 
-## 12. ChatGPT response pattern for this repository
+## 13. ChatGPT response pattern for this repository
 
 When Jean-Paul asks for a task to be sent to Claude Code, ChatGPT should usually provide:
 
@@ -472,9 +513,18 @@ When Jean-Paul provides a PR number or PR link, ChatGPT should:
 7. Provide a corrective prompt if changes are needed.
 ```
 
+When Jean-Paul provides a blocked/failing-test PR, ChatGPT should:
+
+```text
+1. Review the diff and the failing-test evidence.
+2. Decide whether the current PR should be fixed, replaced, or closed.
+3. Provide a focused next prompt that starts after /clear.
+4. Avoid asking Claude Code to rediscover context already visible in the PR.
+```
+
 When the project becomes large or unclear, ChatGPT should prefer creating a mapping issue before asking Claude Code for implementation.
 
-## 13. Repository-specific note
+## 14. Repository-specific note
 
 This repository is a testbed for experimenting with LLM-driven development.
 The process matters as much as the code.
