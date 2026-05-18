@@ -28,6 +28,7 @@ The repository is expected to be used as an experiment harness: ChatGPT prepares
 - Reviews pull requests produced by Claude Code.
 - Checks scope, diff quality, tests, regressions, and issue acceptance criteria.
 - Guides the next corrective prompt when a PR is blocked by failing tests or uncertainty.
+- Prefer targeted corrective PRs for code/test errors instead of discarding useful work.
 - Merges the pull request when the review is acceptable and the project workflow allows it.
 - Closes the related GitHub issue after the PR is merged and acceptance evidence is sufficient.
 - Does not pretend manual validation was done; Jean-Paul performs real tests.
@@ -256,7 +257,47 @@ This rule exists to preserve local AI context and avoid low-quality speculative 
 
 Blocked PRs must not be merged until ChatGPT review confirms the issue is understood and the acceptance criteria are met.
 
-## 8. Progressive project mapping
+## 8. Corrective PR policy
+
+When Claude Code makes a code or test error inside an otherwise useful PR, do not automatically revert to the sources before the error.
+
+The preferred workflow is:
+
+```text
+Claude Code opens the imperfect or blocked PR
+→ ChatGPT reviews the actual diff and failure evidence
+→ ChatGPT identifies the smallest corrective action
+→ Jean-Paul runs /clear
+→ Claude Code applies a targeted correction
+→ Claude Code pushes the correction and opens/updates a PR
+→ ChatGPT reviews again
+```
+
+Corrective prompts should focus on the current error, not on redoing the whole task.
+
+Use a targeted corrective PR when:
+
+- the branch history is clean;
+- the PR scope is mostly correct;
+- the error is localized;
+- the failing test or review finding can be addressed by a small patch;
+- preserving the existing work is safer than recreating it.
+
+Do not ask Claude Code to return to pre-error sources unless the PR is structurally unsafe.
+
+A PR is structurally unsafe when:
+
+- it is based on the wrong branch or stale base;
+- the diff contains unrelated files from previous issues;
+- the history/scope makes review unreliable;
+- generated or accidental files polluted the branch;
+- fixing the branch would be riskier than recreating it cleanly.
+
+In a structurally unsafe PR, ChatGPT may close the PR and ask for a fresh branch from current `origin/main`.
+
+In a normal code/test error, preserve the useful work and produce a narrow fix.
+
+## 9. Progressive project mapping
 
 For larger repositories, ChatGPT should progressively build a reliable understanding of the project through versioned mapping files committed to the repository.
 
@@ -347,7 +388,7 @@ Implementation prompts for large projects should normally ask Claude Code to rea
 
 Maps are guidance, not truth by themselves. Claude Code must still inspect the actual files it edits.
 
-## 9. Pull request review policy
+## 10. Pull request review policy
 
 ChatGPT reviews Claude Code pull requests before they are accepted.
 
@@ -362,6 +403,7 @@ The review should check:
 - Does the diff introduce fragile heuristics, duplicated logic, or hidden global changes?
 - Is manual validation needed before closing the issue?
 - For blocked/failing-test PRs: is the failure documented clearly enough for ChatGPT to guide the next prompt?
+- For corrective PRs: does the fix target the actual reviewed error without rewriting unrelated work?
 - For mapping PRs: do the map claims match the inspected source files, and are hypotheses/unknowns labelled correctly?
 
 If the PR is incomplete, ChatGPT should request changes clearly and provide a corrective prompt for Claude Code. Because Jean-Paul normally uses `/clear`, corrective prompts should also be self-contained.
@@ -370,7 +412,7 @@ If the PR is blocked by failing tests, ChatGPT should not merge it until the fai
 
 If the PR is acceptable, ChatGPT can merge it when the repository policy allows it, then close the related issue if acceptance evidence is sufficient.
 
-## 10. Issue policy
+## 11. Issue policy
 
 GitHub issues are the operational task tracker.
 
@@ -413,7 +455,7 @@ Jean-Paul validates when needed.
 ChatGPT updates/closes the related issue only after sufficient evidence.
 ```
 
-## 11. Branch and PR conventions
+## 12. Branch and PR conventions
 
 Prefer one branch per issue.
 
@@ -464,7 +506,7 @@ PR URL: <url>
 Commit SHA: <sha>
 ```
 
-## 12. Claude Code / local AI safety rules
+## 13. Claude Code / local AI safety rules
 
 Claude Code with local AI backend must avoid:
 
@@ -479,7 +521,8 @@ Claude Code with local AI backend must avoid:
 - force-pushing over unrelated work;
 - hiding uncertainty;
 - writing architectural claims into maps without source evidence;
-- repeatedly guessing fixes for failing tests until context is exhausted.
+- repeatedly guessing fixes for failing tests until context is exhausted;
+- discarding useful PR work just because one localized error exists.
 
 When uncertain, Claude Code should stop and report:
 
@@ -490,7 +533,7 @@ What I am unsure about
 What I recommend next
 ```
 
-## 13. ChatGPT response pattern for this repository
+## 14. ChatGPT response pattern for this repository
 
 When Jean-Paul asks for a task to be sent to Claude Code, ChatGPT should usually provide:
 
@@ -518,13 +561,14 @@ When Jean-Paul provides a blocked/failing-test PR, ChatGPT should:
 ```text
 1. Review the diff and the failing-test evidence.
 2. Decide whether the current PR should be fixed, replaced, or closed.
-3. Provide a focused next prompt that starts after /clear.
-4. Avoid asking Claude Code to rediscover context already visible in the PR.
+3. Prefer a targeted corrective prompt when the PR is structurally safe.
+4. Ask for a fresh branch only when the branch/history/scope is structurally unsafe.
+5. Avoid asking Claude Code to rediscover context already visible in the PR.
 ```
 
 When the project becomes large or unclear, ChatGPT should prefer creating a mapping issue before asking Claude Code for implementation.
 
-## 14. Repository-specific note
+## 15. Repository-specific note
 
 This repository is a testbed for experimenting with LLM-driven development.
 The process matters as much as the code.
