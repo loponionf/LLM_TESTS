@@ -24,6 +24,7 @@ The repository is expected to be used as an experiment harness: ChatGPT prepares
 - Produces compact, self-contained prompts for Claude Code using a local AI backend.
 - Assumes Claude Code has just been reset with `/clear` before each task.
 - Assumes the local AI backend has limited context and unreliable memory.
+- Builds and maintains a progressively versioned understanding of the repository through reviewed mapping files.
 - Reviews pull requests produced by Claude Code.
 - Checks scope, diff quality, tests, regressions, and issue acceptance criteria.
 - Merges the pull request when the review is acceptable and the project workflow allows it.
@@ -228,7 +229,98 @@ Report:
 - Suggested tests.
 ```
 
-## 7. Pull request review policy
+## 7. Progressive project mapping
+
+For larger repositories, ChatGPT should progressively build a reliable understanding of the project through versioned mapping files committed to the repository.
+
+The goal is not to keep the whole project in chat context. The goal is to create an external, reviewable, diffable memory of the codebase.
+
+Suggested structure:
+
+```text
+ai_project/
+  AI_PROJECT_STATE.md
+  AI_TODO.md
+  AI_DECISIONS.md
+  AI_VALIDATION_LOG.md
+  maps/
+    00_repo_overview.md
+    01_entrypoints.md
+    02_build_and_run.md
+    03_test_strategy.md
+    folders/
+      <folder-name>.md
+```
+
+Mapping files should be factual and compact. They should describe what was verified in the repository, not what the model guesses.
+
+Each folder map should prefer this shape:
+
+```text
+# <folder path>
+
+## Verified role
+- ...
+
+## Key files
+- `<file>`: ...
+
+## Entrypoints / exported APIs
+- ...
+
+## Internal dependencies
+- ...
+
+## External dependencies
+- ...
+
+## Runtime/build/test relevance
+- ...
+
+## Risks / fragile areas
+- ...
+
+## Unknowns / to verify
+- ...
+```
+
+Mapping rules:
+
+- Mark verified facts clearly.
+- Mark hypotheses explicitly as `Hypothesis`.
+- Mark unknowns explicitly as `Unknown`.
+- Do not turn guesses into documentation.
+- Do not describe files that were not inspected.
+- Do not overgeneralize from one file to the whole project.
+- Keep maps short enough to be useful after `/clear`.
+- Update maps when a PR changes the meaning of a folder.
+
+For large projects, ChatGPT may create dedicated mapping issues before implementation issues.
+
+Mapping workflow:
+
+```text
+ChatGPT creates a narrow mapping issue
+→ Claude Code reads only the targeted folder/files
+→ Claude Code creates or updates the relevant map file
+→ Claude Code opens a PR
+→ ChatGPT verifies that the map matches the inspected sources
+→ ChatGPT merges the map PR
+→ future prompts rely on the reviewed map plus direct file reads
+```
+
+Implementation prompts for large projects should normally ask Claude Code to read:
+
+```text
+- AI_CHATGPT.md
+- ai_project/AI_PROJECT_STATE.md if it exists
+- relevant ai_project/maps/... files if they exist
+- the exact source/test files in scope
+```
+
+Maps are guidance, not truth by themselves. Claude Code must still inspect the actual files it edits.
+
+## 8. Pull request review policy
 
 ChatGPT reviews Claude Code pull requests before they are accepted.
 
@@ -242,12 +334,13 @@ The review should check:
 - Is the PR description honest about risks?
 - Does the diff introduce fragile heuristics, duplicated logic, or hidden global changes?
 - Is manual validation needed before closing the issue?
+- For mapping PRs: do the map claims match the inspected source files, and are hypotheses/unknowns labelled correctly?
 
 If the PR is incomplete, ChatGPT should request changes clearly and provide a corrective prompt for Claude Code. Because Jean-Paul normally uses `/clear`, corrective prompts should also be self-contained.
 
 If the PR is acceptable, ChatGPT can merge it when the repository policy allows it, then close the related issue if acceptance evidence is sufficient.
 
-## 8. Issue policy
+## 9. Issue policy
 
 GitHub issues are the operational task tracker.
 
@@ -257,6 +350,7 @@ Create an issue when:
 - a task needs a PR;
 - a validation reveals a distinct bug;
 - a larger idea should be split into atomic Claude Code tasks;
+- a folder or subsystem needs a reviewed mapping file;
 - a future improvement should not be mixed into the current PR.
 
 Issue bodies should include:
@@ -289,7 +383,7 @@ Jean-Paul validates when needed.
 ChatGPT updates/closes the related issue only after sufficient evidence.
 ```
 
-## 9. Branch and PR conventions
+## 10. Branch and PR conventions
 
 Prefer one branch per issue.
 
@@ -299,6 +393,7 @@ Suggested branch names:
 issue-<number>-short-topic
 fix/<short-topic>
 feature/<short-topic>
+map/<folder-or-subsystem>
 ```
 
 Suggested commit style:
@@ -307,6 +402,7 @@ Suggested commit style:
 Fix <specific bug>
 Add <specific feature>
 Document <specific workflow>
+Map <folder or subsystem>
 ```
 
 PR descriptions should include:
@@ -328,7 +424,7 @@ PR URL: <url>
 Commit SHA: <sha>
 ```
 
-## 10. Claude Code / local AI safety rules
+## 11. Claude Code / local AI safety rules
 
 Claude Code with local AI backend must avoid:
 
@@ -341,7 +437,8 @@ Claude Code with local AI backend must avoid:
 - changing generated artifacts unless that is the task;
 - closing issues without instruction;
 - force-pushing over unrelated work;
-- hiding uncertainty.
+- hiding uncertainty;
+- writing architectural claims into maps without source evidence.
 
 When uncertain, Claude Code should stop and report:
 
@@ -352,7 +449,7 @@ What I am unsure about
 What I recommend next
 ```
 
-## 11. ChatGPT response pattern for this repository
+## 12. ChatGPT response pattern for this repository
 
 When Jean-Paul asks for a task to be sent to Claude Code, ChatGPT should usually provide:
 
@@ -375,7 +472,9 @@ When Jean-Paul provides a PR number or PR link, ChatGPT should:
 7. Provide a corrective prompt if changes are needed.
 ```
 
-## 12. Repository-specific note
+When the project becomes large or unclear, ChatGPT should prefer creating a mapping issue before asking Claude Code for implementation.
+
+## 13. Repository-specific note
 
 This repository is a testbed for experimenting with LLM-driven development.
 The process matters as much as the code.
@@ -383,7 +482,7 @@ The process matters as much as the code.
 The expected loop is:
 
 ```text
-ChatGPT = planner / reviewer / merger / issue manager
+ChatGPT = planner / reviewer / merger / issue manager / map curator
 Claude Code = coding agent
 Local AI backend = constrained model with short memory
 Jean-Paul = operator / validator / final decision maker
