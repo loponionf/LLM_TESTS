@@ -1,4 +1,6 @@
-import { BOARD_HEIGHT, BOARD_WIDTH } from './constants.js';
+import { createBoard } from './board.js';
+import { createInitialState } from './gameState.js';
+import { renderBoard, renderNextPiece, updateHUD } from './renderer.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const boardEl = document.getElementById('board');
@@ -6,12 +8,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const levelEl = document.getElementById('level');
   const linesEl = document.getElementById('lines');
   const nextPieceEl = document.getElementById('next-piece');
-  const pauseBtn = document.getElementById('pause-btn');
-  const restartBtn = document.getElementById('restart-btn');
-  const gameOverEl = document.getElementById('game-over');
 
-  boardEl.width = BOARD_WIDTH * 30;
-  boardEl.height = BOARD_HEIGHT * 30;
+  // Initialize game state and board
+  const state = createInitialState();
+  const board = createBoard();
 
-  console.log('Tetris V1 shell loaded');
+  // Render initial state
+  renderBoard(boardEl, board, state.activePiece);
+  renderNextPiece(nextPieceEl, state.nextPiece);
+  updateHUD(scoreEl, levelEl, linesEl, state);
+
+  console.log('Tetris V1 initialized');
 });
