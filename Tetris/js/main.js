@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const board = createBoard();
 
   // Render initial state
-  renderBoard(boardEl, board);
+  renderBoard(boardEl, board, state.activePiece);
   renderNextPiece(nextPieceEl, state.nextPiece);
   updateHUD(scoreEl, levelEl, linesEl, state);
 
