@@ -25,6 +25,7 @@ The repository is expected to be used as an experiment harness: ChatGPT prepares
 - Produces compact, self-contained prompts for Claude Code using a local AI backend.
 - Uses `AI_CHATGPT.md` as its own workflow/protocol reference.
 - Does not ask Claude Code to read `AI_CHATGPT.md` by default for normal implementation tasks.
+- Does not ask Claude Code to read mapping files by default; maps are used only when needed to avoid ambiguity or excessive rediscovery.
 - Assumes Claude Code has just been reset with `/clear` before each task.
 - Assumes the local AI backend has limited context and unreliable memory.
 - Builds and maintains a progressively versioned understanding of the repository through reviewed mapping files.
@@ -135,7 +136,8 @@ Important prompt rules:
 - Repeat all important constraints inside the prompt.
 - Tell it exactly which files or areas to inspect first.
 - For normal implementation tasks, do not include `AI_CHATGPT.md` in the read list unless the task concerns workflow/protocol documentation.
-- Prefer task/project docs such as `Tetris/Readme.txt`, mapping files under `ai_project/`, and exact source/test files.
+- Do not include mapping files in the read list by default. Use maps only when the task is large, ambiguous, cross-cutting, or when they clearly reduce token usage versus rediscovering architecture.
+- Prefer the smallest sufficient read set: task README/project doc when useful, then exact source/test files in scope.
 - Tell it not to edit before inspecting relevant files.
 - Tell it to keep changes minimal.
 - Tell it to avoid unrelated formatting, cleanup, dependency changes, or rewrites.
@@ -227,6 +229,7 @@ Goal:
 
 Inspect:
 - <project/task documentation if relevant>
+- <mapping files only if necessary>
 - <files/directories/issues/logs>
 
 Rules:
@@ -419,16 +422,15 @@ ChatGPT creates a narrow mapping issue
 → Claude Code opens a PR
 → ChatGPT verifies that the map matches the inspected sources
 → ChatGPT merges the map PR
-→ future prompts rely on the reviewed map plus direct file reads
+→ future prompts rely on the reviewed map only when it is needed
 ```
 
-Implementation prompts for large projects should normally ask Claude Code to read:
+Implementation prompts for large projects should normally ask Claude Code to read the smallest sufficient set, in this order:
 
 ```text
-- ai_project/AI_PROJECT_STATE.md if it exists
-- relevant ai_project/maps/... files if they exist
-- project/task documentation if relevant
-- the exact source/test files in scope
+1. exact source/test files in scope
+2. project/task documentation if it directly constrains the work
+3. mapping files only when needed to avoid ambiguity, reduce rediscovery, or handle cross-cutting architecture
 ```
 
 Maps are guidance, not truth by themselves. Claude Code must still inspect the actual files it edits.
