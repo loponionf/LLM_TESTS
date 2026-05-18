@@ -43,11 +43,19 @@ export function setupInputHandlers(callbacks) {
   currentCallbacks = callbacks || {};
 
   if (!keyListenerAttached) {
+    const KEY_MAP = {
+      [KEY_LEFT]: 'moveLeft',
+      [KEY_RIGHT]: 'moveRight',
+      [KEY_DOWN]: 'softDrop',
+      [KEY_UP]: 'rotate',
+      [KEY_SPACE]: 'hardDrop',
+    };
+
     const handleKey = (e) => {
-      const fn = currentCallbacks[e.key];
-      if (fn) {
+      const cbName = KEY_MAP[e.key];
+      if (cbName) {
         e.preventDefault();
-        safe(fn)();
+        safe(currentCallbacks[cbName])();
       }
     };
 
