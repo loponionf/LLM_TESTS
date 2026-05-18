@@ -12,7 +12,7 @@ The repository is expected to be used as an experiment harness: ChatGPT prepares
 - Owns the repository and decides what is acceptable in practice.
 - Runs the local AI agent and gives it the prompts prepared by ChatGPT.
 - Performs real-world/manual validation when needed.
-- Shares PR links, logs, screenshots, diffs, or test results with ChatGPT for review.
+- Shares PR number/link, logs, screenshots, diffs, or test results with ChatGPT for review.
 - Does not have to preserve local AI chat history; prompts should be self-contained.
 
 ### ChatGPT
@@ -23,8 +23,9 @@ The repository is expected to be used as an experiment harness: ChatGPT prepares
 - Assumes the local AI has limited context and unreliable memory.
 - Reviews pull requests produced by the local AI.
 - Checks scope, diff quality, tests, regressions, and issue acceptance criteria.
+- Merges the pull request when the review is acceptable and the project workflow allows it.
+- Closes the related GitHub issue after the PR is merged and acceptance evidence is sufficient.
 - Does not pretend manual validation was done; Jean-Paul performs real tests.
-- Closes or updates issues only after implementation evidence and validation status are clear.
 
 ### Local AI agent
 
@@ -33,7 +34,8 @@ The repository is expected to be used as an experiment harness: ChatGPT prepares
 - Must read the repository files needed for the task before editing.
 - Must make small, surgical changes.
 - Must run relevant tests when possible.
-- Must commit/push and open a pull request when asked.
+- Must commit, push, and open a pull request when asked.
+- Must report the pull request number explicitly, in addition to the PR URL.
 - Must report exactly what changed, what was tested, and what remains risky.
 
 ## 2. Core principle for local AI prompts
@@ -69,11 +71,13 @@ Idea or bug
 → ChatGPT prepares a local-AI prompt
 → Jean-Paul gives the prompt to the local AI
 → Local AI creates a branch, implements, tests, commits, pushes, and opens a PR
-→ Jean-Paul gives the PR link to ChatGPT
+→ Local AI reports the PR number and PR URL
+→ Jean-Paul gives the PR number/link to ChatGPT
 → ChatGPT reviews the PR
 → Local AI fixes review findings if needed
 → Jean-Paul performs real validation when needed
-→ ChatGPT updates/closes the issue only when evidence is sufficient
+→ ChatGPT merges the PR when acceptable
+→ ChatGPT closes the related issue when evidence is sufficient
 ```
 
 For development tasks, prefer:
@@ -119,6 +123,7 @@ Important prompt rules:
 - Tell it to create a dedicated branch for the issue.
 - Tell it to commit and push only the relevant changes.
 - Tell it to open a pull request against the target branch.
+- Tell it to return the pull request number explicitly, for example `PR: #12`.
 - Tell it not to close GitHub issues by itself unless explicitly asked.
 - Tell it to include test results and remaining risks in the PR body or final report.
 
@@ -164,11 +169,13 @@ Tasks:
 7. Commit the changes with a clear message.
 8. Push the branch.
 9. Open a pull request against `<base-branch>`.
+10. Return the pull request number explicitly in your final response, for example `PR: #12`.
 
 PR/report requirements:
 - Summary of changed files.
 - Tests run and exact result.
 - Commit SHA.
+- Pull request number, in the exact form `PR: #<number>`.
 - PR URL.
 - Any remaining risks or unmet acceptance criteria.
 ```
@@ -222,6 +229,8 @@ The review should check:
 
 If the PR is incomplete, ChatGPT should request changes clearly and provide a corrective prompt for the local AI.
 
+If the PR is acceptable, ChatGPT can merge it when the repository policy allows it, then close the related issue if acceptance evidence is sufficient.
+
 ## 8. Issue policy
 
 GitHub issues are the operational task tracker.
@@ -257,7 +266,9 @@ Default closure owner:
 
 ```text
 Local AI implements and opens a PR.
+Local AI reports the PR number and PR URL.
 ChatGPT reviews the PR.
+ChatGPT merges the PR when acceptable.
 Jean-Paul validates when needed.
 ChatGPT updates/closes the related issue only after sufficient evidence.
 ```
@@ -291,6 +302,14 @@ Tests run
 Manual validation needed
 Related issue
 Risks / follow-ups
+```
+
+The local AI final response must include:
+
+```text
+PR: #<number>
+PR URL: <url>
+Commit SHA: <sha>
 ```
 
 ## 10. Local AI safety rules
@@ -328,14 +347,16 @@ When Jean-Paul asks for a task to be sent to the local AI, ChatGPT should usuall
 4. A review checklist for the future PR.
 ```
 
-When Jean-Paul provides a PR link, ChatGPT should:
+When Jean-Paul provides a PR number or PR link, ChatGPT should:
 
 ```text
 1. Fetch PR metadata and diff.
 2. Review scope against the issue/prompt.
 3. Inspect changed files and relevant tests.
 4. Give an approve/request-changes style conclusion.
-5. Provide a corrective prompt if changes are needed.
+5. Merge the PR if it is acceptable and no manual validation blocker remains.
+6. Close/update the related issue after merge when acceptance criteria are satisfied.
+7. Provide a corrective prompt if changes are needed.
 ```
 
 ## 12. Repository-specific note
@@ -346,7 +367,7 @@ The process matters as much as the code.
 The expected loop is:
 
 ```text
-ChatGPT = planner / reviewer / issue manager
+ChatGPT = planner / reviewer / merger / issue manager
 Local AI = constrained implementer with short memory
 Jean-Paul = operator / validator / final decision maker
 ```
