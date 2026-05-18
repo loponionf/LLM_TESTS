@@ -31,6 +31,7 @@ function spawnPiece() {
  * @returns {object}
  */
 export function createInitialState() {
+  const active = spawnPiece();
   const next = spawnPiece();
   return {
     score: 0,
@@ -38,7 +39,7 @@ export function createInitialState() {
     lines: 0,
     paused: false,
     gameOver: false,
-    activePiece: null,
+    activePiece: active,
     nextPiece: next,
   };
 }
@@ -91,10 +92,9 @@ export function applyLineClear(state, linesCleared) {
               linesCleared === 2 ? 'TWO_LINES' :
               linesCleared === 1 ? 'ONE_LINE' : null;
 
-  if (key) {
-    state.score += SCORING[key] * state.level;
-  }
+  if (!key) return;
 
+  state.score += SCORING[key] * state.level;
   state.lines += linesCleared;
 
   const newLevel = Math.floor(state.lines / LINES_PER_LEVEL) + INITIAL_LEVEL;
