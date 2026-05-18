@@ -1,5 +1,7 @@
-import { isValidPosition } from './board.js';
+import { isValidPosition, lockPiece as lockPieceBoard, clearLines } from './board.js';
 import { getTetromino } from './pieces.js';
+import { getRandomTetromino } from './pieces.js';
+import { applyLineClear, setActivePiece, setNextPiece, setGameOver } from './gameState.js';
 
 /**
  * Movement helpers for the active piece.
@@ -38,6 +40,7 @@ export function moveRight(board, state) {
 
 /**
  * Move the active piece one row down.
+ * If the piece cannot move further down, lock it and spawn a new piece.
  */
 export function moveDown(board, state) {
   const p = state.activePiece;
@@ -46,11 +49,13 @@ export function moveDown(board, state) {
   if (!def) return;
   if (isValidPosition(board, def, p.x, p.y + 1, p.rotationIndex || 0)) {
     p.y += 1;
+  } else {
+    lockAndSpawn(board, state);
   }
 }
 
 /**
- * Move the active piece to the lowest valid row (hard drop).
+ * Move the active piece to the lowest valid row and lock it.
  */
 export function hardDrop(board, state) {
   const p = state.activePiece;
@@ -60,6 +65,7 @@ export function hardDrop(board, state) {
   while (isValidPosition(board, def, p.x, p.y + 1, p.rotationIndex || 0)) {
     p.y += 1;
   }
+  lockAndSpawn(board, state);
 }
 
 /**
@@ -76,5 +82,63 @@ export function rotatePiece(board, state) {
   if (isValidPosition(board, def, p.x, p.y, nextRot)) {
     p.rotationIndex = nextRot;
     p.shape = def.shapes[nextRot];
+  }
+}
+
+/**
+ * Spawn a new active piece from a given tetromino definition.
+ * Centers it at the top of the board.
+ *
+ * @param {object} tet - Full tetromino definition (with .shapes).
+ * @returns {object} { name, color, shape, x, y }
+ */
+function createPiece(tet) {
+  const shape = tet.shapes[0];
+  const y = 0;
+  const x = Math.floor((10 - shape[0].length) / 2);
+  return { name: tet.name, color: tet.color, shape, x, y };
+}
+
+/**
+ * Lock the active piece, clear lines, update score/level,
+ * promote nextPiece to activePiece, generate a new nextPiece,
+ * and detect game over.
+ *
+ * @param {Array<Array|null>} board
+ * @param {object} state
+ */
+export function lockAndSpawn(board, state) {
+  const p = state.activePiece;
+  if (!p) return;
+
+  // 1. Lock the piece into the board
+  const def = getTetromino(p.name);
+  if (!def) return;
+  lockPieceBoard(board, def, p.x, p.y, p.rotationIndex || 0);
+
+  // 2. Clear completed lines
+  const linesCleared = clearLines(board);
+
+  // 3. Update score and level
+  if (linesCleared > 0) {
+    applyLineClear(state, linesCleared);
+  }
+
+  // 4. Promote nextPiece to activePiece
+  const newActive = state.nextPiece;
+  if (!newActive) {
+    setActivePiece(state, null);
+    return;
+  }
+
+  // 5. Generate a new nextPiece
+  const newNext = createPiece(getRandomTetromino());
+  setNextPiece(state, newNext);
+  setActivePiece(state, newActive);
+
+  // 6. Detect game over: if the newly spawned piece collides immediately
+  const freshDef = getTetromino(newActive.name);
+  if (freshDef && !isValidPosition(board, freshDef, newActive.x, newActive.y, newActive.rotationIndex || 0)) {
+    setGameOver(state);
   }
 }
