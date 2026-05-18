@@ -1,6 +1,7 @@
 # AI_CHATGPT.md — Working agreement for ChatGPT and Claude Code with local AI on this repository
 
 This file documents how Jean-Paul, ChatGPT, and Claude Code using a local AI backend work together on this repository.
+It is primarily a ChatGPT-facing protocol/reference file, not a default implementation input for Claude Code.
 It is intended as a stable handoff/reference document after new chats, systematic `/clear`, local model resets, or pull-request reviews.
 
 The repository is expected to be used as an experiment harness: ChatGPT prepares the work, Jean-Paul relays prompts to Claude Code, Claude Code uses a local AI backend to implement and open a pull request, then ChatGPT reviews the pull request before anything is accepted.
@@ -22,6 +23,8 @@ The repository is expected to be used as an experiment harness: ChatGPT prepares
 - Frames work before implementation.
 - Creates or updates GitHub issues when asked.
 - Produces compact, self-contained prompts for Claude Code using a local AI backend.
+- Uses `AI_CHATGPT.md` as its own workflow/protocol reference.
+- Does not ask Claude Code to read `AI_CHATGPT.md` by default for normal implementation tasks.
 - Assumes Claude Code has just been reset with `/clear` before each task.
 - Assumes the local AI backend has limited context and unreliable memory.
 - Builds and maintains a progressively versioned understanding of the repository through reviewed mapping files.
@@ -131,6 +134,8 @@ Important prompt rules:
 - Assume the local AI backend has no memory.
 - Repeat all important constraints inside the prompt.
 - Tell it exactly which files or areas to inspect first.
+- For normal implementation tasks, do not include `AI_CHATGPT.md` in the read list unless the task concerns workflow/protocol documentation.
+- Prefer task/project docs such as `Tetris/Readme.txt`, mapping files under `ai_project/`, and exact source/test files.
 - Tell it not to edit before inspecting relevant files.
 - Tell it to keep changes minimal.
 - Tell it to avoid unrelated formatting, cleanup, dependency changes, or rewrites.
@@ -164,6 +169,7 @@ Issue context:
 - <short acceptance criteria>
 
 Inspect first:
+- <project/task documentation if relevant, e.g. Tetris/Readme.txt>
 - <file or directory 1>
 - <file or directory 2>
 - <tests if known>
@@ -220,6 +226,7 @@ Goal:
 - <analysis goal>
 
 Inspect:
+- <project/task documentation if relevant>
 - <files/directories/issues/logs>
 
 Rules:
@@ -418,9 +425,9 @@ ChatGPT creates a narrow mapping issue
 Implementation prompts for large projects should normally ask Claude Code to read:
 
 ```text
-- AI_CHATGPT.md
 - ai_project/AI_PROJECT_STATE.md if it exists
 - relevant ai_project/maps/... files if they exist
+- project/task documentation if relevant
 - the exact source/test files in scope
 ```
 
