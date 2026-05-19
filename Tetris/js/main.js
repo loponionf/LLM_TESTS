@@ -96,6 +96,7 @@ document.addEventListener('DOMContentLoaded', () => {
     hardDrop: () => { if (!state.gameOver && !state.paused && !state.ready) { hardDrop(board, state); refreshAfterScore(); } },
     rotate: () => { if (!state.gameOver && !state.paused && !state.ready) { rotatePiece(board, state); refresh(); } },
     togglePause: () => {
+      if (state.ready) return;
       const wasPaused = togglePause(state);
       refresh();
       if (wasPaused) {
