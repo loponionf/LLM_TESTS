@@ -8,6 +8,8 @@ import {
   resetBestScore,
   performHold,
   resetHold,
+  clearReady,
+  setReady,
 } from './gameState.js';
 import { renderBoard, renderNextPiece, renderHoldPiece, updateHUD } from './renderer.js';
 import { setupInputHandlers } from './input.js';
@@ -31,6 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const holdPieceEl = document.getElementById('hold-piece');
   const nextPieceEl = document.getElementById('next-piece');
   const gameOverEl = document.getElementById('game-over');
+  const startOverlayEl = document.getElementById('start-overlay');
+  const pauseOverlayEl = document.getElementById('pause-overlay');
+  const startBtn = document.getElementById('start-btn');
   const resetBestBtn = document.getElementById('reset-best-btn');
 
   // Initialize game state and board
@@ -51,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Show game over overlay if applicable
     if (state.gameOver) {
       gameOverEl.style.display = 'block';
-      gameOverEl.textContent = 'GAME OVER';
+      gameOverEl.innerHTML = '<h2>GAME OVER</h2><div class="final-score">Score: ' + state.score + '</div><button id="game-over-restart-btn">RESTART</button>';
     } else {
       gameOverEl.style.display = 'none';
     }
@@ -70,36 +75,81 @@ document.addEventListener('DOMContentLoaded', () => {
     refresh();
   }
 
+  /**
+   * Start gameplay: clear ready flag, hide overlays, begin gravity.
+   */
+  function startGame() {
+    if (!state.ready) return;
+    clearReady(state);
+    startOverlayEl.style.display = 'none';
+    pauseOverlayEl.style.display = 'none';
+    gameOverEl.style.display = 'none';
+    startGravityLoop(board, state, refreshAfterScore);
+  }
+
   // Wire input callbacks
   setupInputHandlers({
-    moveLeft: () => { if (!state.gameOver && !state.paused) { moveLeft(board, state); refresh(); } },
-    moveRight: () => { if (!state.gameOver && !state.paused) { moveRight(board, state); refresh(); } },
-    softDrop: () => { if (!state.gameOver && !state.paused) { moveDown(board, state); refreshAfterScore(); } },
-    hardDrop: () => { if (!state.gameOver && !state.paused) { hardDrop(board, state); refreshAfterScore(); } },
-    rotate: () => { if (!state.gameOver && !state.paused) { rotatePiece(board, state); refresh(); } },
+    moveLeft: () => { if (!state.gameOver && !state.paused && !state.ready) { moveLeft(board, state); refresh(); } },
+    moveRight: () => { if (!state.gameOver && !state.paused && !state.ready) { moveRight(board, state); refresh(); } },
+    softDrop: () => { if (!state.gameOver && !state.paused && !state.ready) { moveDown(board, state); refreshAfterScore(); } },
+    hardDrop: () => { if (!state.gameOver && !state.paused && !state.ready) { hardDrop(board, state); refreshAfterScore(); } },
+    rotate: () => { if (!state.gameOver && !state.paused && !state.ready) { rotatePiece(board, state); refresh(); } },
     togglePause: () => {
+      // No-op when ready (game hasn't started yet) or game over
+      if (state.ready || state.gameOver) return;
       const wasPaused = togglePause(state);
       refresh();
       if (wasPaused) {
         stopGravityLoop();
+        pauseOverlayEl.style.display = 'block';
       } else {
+        pauseOverlayEl.style.display = 'none';
         startGravityLoop(board, state, refreshAfterScore);
       }
     },
     hold: () => {
-      if (!state.gameOver && !state.paused) {
+      if (!state.gameOver && !state.paused && !state.ready) {
         performHold(state);
         refresh();
       }
     },
     restart: () => {
+      stopGravityLoop();
       state = resetGameState(state);
       lastScoreForBestCheck = state.score;
       board = createBoard();
-      stopGravityLoop();
+      gameOverEl.style.display = 'none';
+      pauseOverlayEl.style.display = 'none';
+      startOverlayEl.style.display = 'block';
       refresh();
-      startGravityLoop(board, state, refreshAfterScore);
     },
+  });
+
+  // Start button
+  startBtn.addEventListener('click', () => {
+    startGame();
+  });
+
+  // Enter key starts game from ready state
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && state.ready) {
+      e.preventDefault();
+      startGame();
+    }
+  });
+
+  // Game-over restart button
+  document.addEventListener('click', (e) => {
+    if (e.target.id === 'game-over-restart-btn') {
+      stopGravityLoop();
+      state = resetGameState(state);
+      lastScoreForBestCheck = state.score;
+      board = createBoard();
+      gameOverEl.style.display = 'none';
+      pauseOverlayEl.style.display = 'none';
+      startOverlayEl.style.display = 'block';
+      refresh();
+    }
   });
 
   // Reset best score button
@@ -109,10 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
     refresh();
   });
 
-  // Start automatic gravity
-  startGravityLoop(board, state, refreshAfterScore);
-
-  // Initial render
+  // Initial render — do NOT start gravity until Start
   refresh();
 
   console.log('Tetris V1 initialized');

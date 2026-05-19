@@ -41,6 +41,7 @@ export function resetBestScore(state) {
  *   lines       – total accumulated cleared lines
  *   paused      – boolean
  *   gameOver    – boolean
+ *   ready       – boolean (true before gameplay has started)
  *   activePiece – { name, color, shape, x, y } or null
  *   nextPiece   – { name, color, shape, x, y } or null
  *   heldPiece   – { name, color, shape, x, y } or null
@@ -72,6 +73,7 @@ export function createInitialState(bestScore) {
     lines: 0,
     paused: false,
     gameOver: false,
+    ready: true,
     bestScore: bestScore ?? 0,
     activePiece: active,
     nextPiece: next,
@@ -98,6 +100,22 @@ export function togglePause(state) {
   if (state.gameOver) return state.paused;
   state.paused = !state.paused;
   return state.paused;
+}
+
+/**
+ * Mark the game as ready (initial state before gameplay).
+ * @param {object} state
+ */
+export function setReady(state) {
+  state.ready = true;
+}
+
+/**
+ * Clear ready flag — gameplay has begun.
+ * @param {object} state
+ */
+export function clearReady(state) {
+  state.ready = false;
 }
 
 /**
