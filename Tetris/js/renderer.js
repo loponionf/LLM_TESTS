@@ -139,6 +139,10 @@ export function renderNextPiece(canvas, piece) {
  * @param {HTMLElement} bestEl
  * @param {object} state - game state object
  */
+export function renderHoldPiece(canvas, piece) {
+  renderNextPiece(canvas, piece);
+}
+
 export function updateHUD(scoreEl, levelEl, linesEl, bestEl, state) {
   scoreEl.textContent = state.score;
   levelEl.textContent = state.level;

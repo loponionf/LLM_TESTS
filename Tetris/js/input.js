@@ -4,6 +4,7 @@ import {
   KEY_DOWN,
   KEY_UP,
   KEY_SPACE,
+  KEY_HOLD,
 } from './constants.js';
 
 /**
@@ -25,6 +26,7 @@ import {
  * @param {Function} [callbacks.hardDrop]
  * @param {Function} [callbacks.togglePause]
  * @param {Function} [callbacks.restart]
+ * @param {Function} [callbacks.hold]
  */
 let currentCallbacks = {};
 let keyListenerAttached = false;
@@ -49,6 +51,7 @@ export function setupInputHandlers(callbacks) {
       [KEY_DOWN]: 'softDrop',
       [KEY_UP]: 'rotate',
       [KEY_SPACE]: 'hardDrop',
+      [KEY_HOLD]: 'hold',
     };
 
     const handleKey = (e) => {

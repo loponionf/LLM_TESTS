@@ -6,8 +6,10 @@ import {
   loadBestScore,
   checkBestScore,
   resetBestScore,
+  performHold,
+  resetHold,
 } from './gameState.js';
-import { renderBoard, renderNextPiece, updateHUD } from './renderer.js';
+import { renderBoard, renderNextPiece, renderHoldPiece, updateHUD } from './renderer.js';
 import { setupInputHandlers } from './input.js';
 import {
   moveLeft,
@@ -26,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const levelEl = document.getElementById('level');
   const linesEl = document.getElementById('lines');
   const bestEl = document.getElementById('best-score');
+  const holdPieceEl = document.getElementById('hold-piece');
   const nextPieceEl = document.getElementById('next-piece');
   const gameOverEl = document.getElementById('game-over');
   const resetBestBtn = document.getElementById('reset-best-btn');
@@ -41,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function refresh() {
     const ghost = computeGhostPosition(board, state);
     renderBoard(boardEl, board, state.activePiece, ghost);
+    renderHoldPiece(holdPieceEl, state.heldPiece);
     renderNextPiece(nextPieceEl, state.nextPiece);
     updateHUD(scoreEl, levelEl, linesEl, bestEl, state);
 
@@ -80,6 +84,12 @@ document.addEventListener('DOMContentLoaded', () => {
         stopGravityLoop();
       } else {
         startGravityLoop(board, state, refreshAfterScore);
+      }
+    },
+    hold: () => {
+      if (!state.gameOver && !state.paused) {
+        performHold(state);
+        refresh();
       }
     },
     restart: () => {
