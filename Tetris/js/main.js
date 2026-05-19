@@ -60,15 +60,6 @@ document.addEventListener('DOMContentLoaded', () => {
     refresh();
   }
 
-  /**
-   * Full restart: reset state and board.
-   */
-  function restart() {
-    state = resetGameState();
-    board = createBoard();
-    refresh();
-  }
-
   // Wire input callbacks
   setupInputHandlers({
     moveLeft: () => { if (!state.gameOver && !state.paused) { moveLeft(board, state); refresh(); } },
@@ -99,10 +90,9 @@ document.addEventListener('DOMContentLoaded', () => {
     resetBestScore(state);
     refresh();
   });
-  });
 
   // Start automatic gravity
-  startGravityLoop(board, state, refresh);
+  startGravityLoop(board, state, refreshAfterScore);
 
   // Initial render
   refresh();
