@@ -308,6 +308,37 @@ In a structurally unsafe PR, ChatGPT may close the PR and ask for a fresh branch
 
 In a normal code/test error, preserve the useful work and produce a narrow fix.
 
+### Same-PR vs new-PR correction rule
+
+When a reviewed PR is broadly correct and the remaining problem is localized, ChatGPT should normally ask Claude Code to push the correction to the same branch/PR.
+
+Use the same PR when:
+
+- the branch is based on the expected target branch or can be updated safely;
+- the issue scope is still correct;
+- the diff is reviewable;
+- the bug is localized;
+- the correction is small and surgical;
+- preserving the PR discussion and review history is useful;
+- opening a new PR would add noise without improving review safety.
+
+In this case the preferred loop is:
+
+```text
+PR mostly correct
+→ ChatGPT identifies localized blocker
+→ Jean-Paul runs /clear if needed
+→ Claude Code fixes on the same branch
+→ Claude Code pushes to the same PR
+→ ChatGPT re-reviews the updated PR
+→ merge if acceptable
+```
+
+Use a new PR or abandon/recreate the branch only when the current PR is structurally unsafe.
+Examples include wrong base branch, stale or tangled history, mixed unrelated issues, accidental generated files, broad rewrites, or a diff that cannot be reviewed reliably.
+
+If a PR is closed/rejected but Claude Code still has useful local sources, ChatGPT may still ask Claude Code to keep those sources and open a new clean PR after removing the structural risk.
+
 ### Rejected PR rule for local AI continuity
 
 When a PR is wrong but Claude Code still has a useful local working state, ChatGPT should prefer closing/rejecting the PR without asking Claude Code to resynchronize first.
