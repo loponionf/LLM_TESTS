@@ -10,10 +10,25 @@ import { CELL_SIZE } from './constants.js';
 function fillCell(ctx, x, y, color) {
   const px = x * CELL_SIZE;
   const py = y * CELL_SIZE;
+  const inset = 1;
+
+  // Base fill
   ctx.fillStyle = color;
-  ctx.fillRect(px, py, CELL_SIZE, CELL_SIZE);
+  ctx.fillRect(px + inset, py + inset, CELL_SIZE - inset * 2, CELL_SIZE - inset * 2);
+
+  // Top-left highlight
+  ctx.fillStyle = 'rgba(255,255,255,0.18)';
+  ctx.fillRect(px + inset, py + inset, CELL_SIZE - inset * 2, 2);
+  ctx.fillRect(px + inset, py + inset, 2, CELL_SIZE - inset * 2);
+
+  // Bottom-right shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.fillRect(px + inset, py + CELL_SIZE - inset - 2, CELL_SIZE - inset * 2, 2);
+  ctx.fillRect(px + CELL_SIZE - inset - 2, py + inset, 2, CELL_SIZE - inset * 2);
+
+  // Subtle border
   ctx.strokeStyle = 'rgba(0,0,0,0.3)';
-  ctx.strokeRect(px, py, CELL_SIZE, CELL_SIZE);
+  ctx.strokeRect(px + inset, py + inset, CELL_SIZE - inset * 2, CELL_SIZE - inset * 2);
 }
 
 /**
