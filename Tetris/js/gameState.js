@@ -1,6 +1,37 @@
 import { BOARD_WIDTH, SCORING, INITIAL_LEVEL, LINES_PER_LEVEL } from './constants.js';
 import { getRandomTetromino } from './pieces.js';
 
+const BEST_SCORE_KEY = 'tetris.bestScore';
+
+/**
+ * Load the best score from localStorage.
+ * @returns {number}
+ */
+export function loadBestScore() {
+  return parseInt(localStorage.getItem(BEST_SCORE_KEY), 10) || 0;
+}
+
+/**
+ * Persist the best score to localStorage if it improved.
+ * Mutates `state.bestScore` in place and writes to localStorage.
+ * @param {object} state
+ */
+export function checkBestScore(state) {
+  if (state.score > state.bestScore) {
+    state.bestScore = state.score;
+    localStorage.setItem(BEST_SCORE_KEY, String(state.score));
+  }
+}
+
+/**
+ * Reset the best score in memory and localStorage.
+ * @param {object} state
+ */
+export function resetBestScore(state) {
+  state.bestScore = 0;
+  localStorage.removeItem(BEST_SCORE_KEY);
+}
+
 /**
  * Game state container.
  *
@@ -30,7 +61,7 @@ function spawnPiece() {
  * Create a fresh game state.
  * @returns {object}
  */
-export function createInitialState() {
+export function createInitialState(bestScore) {
   const active = spawnPiece();
   const next = spawnPiece();
   return {
@@ -39,6 +70,7 @@ export function createInitialState() {
     lines: 0,
     paused: false,
     gameOver: false,
+    bestScore: bestScore ?? 0,
     activePiece: active,
     nextPiece: next,
   };
@@ -48,8 +80,9 @@ export function createInitialState() {
  * Reset / restart the game state.
  * @returns {object} Fresh game state.
  */
-export function resetGameState() {
-  return createInitialState();
+export function resetGameState(state) {
+  const best = state ? state.bestScore : 0;
+  return createInitialState(best);
 }
 
 /**

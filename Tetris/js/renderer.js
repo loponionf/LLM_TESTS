@@ -132,14 +132,16 @@ export function renderNextPiece(canvas, piece) {
 }
 
 /**
- * Update the HUD text elements with current score, level, and lines.
+ * Update the HUD text elements with current score, level, lines, and best score.
  * @param {HTMLElement} scoreEl
  * @param {HTMLElement} levelEl
  * @param {HTMLElement} linesEl
+ * @param {HTMLElement} bestEl
  * @param {object} state - game state object
  */
-export function updateHUD(scoreEl, levelEl, linesEl, state) {
+export function updateHUD(scoreEl, levelEl, linesEl, bestEl, state) {
   scoreEl.textContent = state.score;
   levelEl.textContent = state.level;
   linesEl.textContent = state.lines;
+  bestEl.textContent = state.bestScore;
 }
