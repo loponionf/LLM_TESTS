@@ -27,3 +27,14 @@ test('renders demo cards in columns', () => {
   expect(screen.getByText('Define column types')).toBeInTheDocument()
   expect(screen.getByText('Add drag and drop')).toBeInTheDocument()
 })
+
+test('renders priority badge', () => {
+  render(<App />)
+  expect(screen.getByText('high')).toBeInTheDocument()
+})
+
+test('renders task tags', () => {
+  render(<App />)
+  expect(screen.getAllByText('infra').length).toBe(2)
+  expect(screen.getByText('types')).toBeInTheDocument()
+})
