@@ -8,6 +8,7 @@ import {
   moveDown,
   hardDrop,
   rotatePiece,
+  computeGhostPosition,
   startGravityLoop,
   stopGravityLoop,
 } from './gameLoop.js';
@@ -28,7 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
    * Re-render everything after a state change.
    */
   function refresh() {
-    renderBoard(boardEl, board, state.activePiece);
+    const ghost = computeGhostPosition(board, state);
+    renderBoard(boardEl, board, state.activePiece, ghost);
     renderNextPiece(nextPieceEl, state.nextPiece);
     updateHUD(scoreEl, levelEl, linesEl, state);
 

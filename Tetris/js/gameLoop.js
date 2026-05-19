@@ -153,6 +153,27 @@ let gravityIntervalId = null;
 let gravityLoopLevel = null;
 
 /**
+ * Compute the landing position for the active piece (ghost).
+ * Simulates downward movement without mutating state.activePiece.
+ *
+ * @param {Array<Array|null>} board
+ * @param {object} state - Game state object.
+ * @returns {{x: number, y: number}|null} Ghost grid position or null.
+ */
+export function computeGhostPosition(board, state) {
+  const p = state.activePiece;
+  if (!p) return null;
+  const def = getTetromino(p.name);
+  if (!def) return null;
+
+  let ghostY = p.y;
+  while (isValidPosition(board, def, p.x, ghostY + 1, p.rotationIndex || 0)) {
+    ghostY += 1;
+  }
+  return { x: p.x, y: ghostY };
+}
+
+/**
  * Compute the gravity delay in ms for a given level.
  * @param {number} level
  * @returns {number}
