@@ -43,6 +43,8 @@ export function resetBestScore(state) {
  *   gameOver    – boolean
  *   activePiece – { name, color, shape, x, y } or null
  *   nextPiece   – { name, color, shape, x, y } or null
+ *   heldPiece   – { name, color, shape, x, y } or null
+ *   canHold     – boolean (once per piece)
  */
 
 /**
@@ -73,6 +75,8 @@ export function createInitialState(bestScore) {
     bestScore: bestScore ?? 0,
     activePiece: active,
     nextPiece: next,
+    heldPiece: null,
+    canHold: true,
   };
 }
 
@@ -152,4 +156,54 @@ export function setActivePiece(state, piece) {
  */
 export function setNextPiece(state, piece) {
   state.nextPiece = piece;
+}
+
+/**
+ * Perform a hold/swap action.
+ *
+ * - If canHold is false, nothing happens.
+ * - If heldPiece is null: store activePiece in heldPiece, spawn a fresh piece as active.
+ * - If heldPiece exists: swap activePiece with heldPiece (active gets a fresh spawn position).
+ *
+ * Mutates `state` in place. Returns true if action was performed.
+ * @param {object} state
+ * @returns {boolean}
+ */
+export function performHold(state) {
+  if (!state.canHold || state.gameOver || state.paused || !state.activePiece) {
+    return false;
+  }
+
+  const currentActive = state.activePiece;
+  // Reset canHold so repeated C presses do nothing this piece lifetime
+  state.canHold = false;
+
+  if (!state.heldPiece) {
+    // Store current piece, spawn fresh
+    state.heldPiece = { name: currentActive.name, color: currentActive.color };
+    const tet = getRandomTetromino();
+    const shape = tet.shapes[0];
+    const y = 0;
+    const x = Math.floor((BOARD_WIDTH - shape[0].length) / 2);
+    state.activePiece = { name: tet.name, color: tet.color, shape, x, y };
+  } else {
+    // Swap: held piece becomes active (fresh spawn position)
+    const held = state.heldPiece;
+    const tet = getRandomTetromino();
+    const shape = tet.shapes[0];
+    const y = 0;
+    const x = Math.floor((BOARD_WIDTH - shape[0].length) / 2);
+    state.activePiece = { name: held.name, color: held.color, shape, x, y };
+    state.heldPiece = { name: tet.name, color: tet.color };
+  }
+
+  return true;
+}
+
+/**
+ * Reset hold state when a new piece spawns after lock.
+ * @param {object} state
+ */
+export function resetHold(state) {
+  state.canHold = true;
 }

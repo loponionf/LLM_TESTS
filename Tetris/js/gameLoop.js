@@ -6,7 +6,7 @@ import {
 import { isValidPosition, lockPiece as lockPieceBoard, clearLines } from './board.js';
 import { getTetromino } from './pieces.js';
 import { getRandomTetromino } from './pieces.js';
-import { applyLineClear, setActivePiece, setNextPiece, setGameOver } from './gameState.js';
+import { applyLineClear, setActivePiece, setNextPiece, setGameOver, resetHold } from './gameState.js';
 
 /**
  * Movement helpers for the active piece.
@@ -141,7 +141,10 @@ export function lockAndSpawn(board, state) {
   setNextPiece(state, newNext);
   setActivePiece(state, newActive);
 
-  // 6. Detect game over: if the newly spawned piece collides immediately
+  // 6. Reset hold availability for the new active piece
+  resetHold(state);
+
+  // 7. Detect game over: if the newly spawned piece collides immediately
   const freshDef = getTetromino(newActive.name);
   if (freshDef && !isValidPosition(board, freshDef, newActive.x, newActive.y, newActive.rotationIndex || 0)) {
     setGameOver(state);
