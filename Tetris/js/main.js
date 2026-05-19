@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initialize game state and board
   let state = createInitialState(loadBestScore());
   let board = createBoard();
+  let lastScoreForBestCheck = state.score;
 
   /**
    * Re-render everything after a state change.
@@ -54,9 +55,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   /**
    * Re-render after a scoring action (checks and updates best score).
+   * Only calls checkBestScore when the current score has actually changed
+   * since the last check, to avoid overwriting a freshly reset best score.
    */
   function refreshAfterScore() {
-    checkBestScore(state);
+    if (state.score !== lastScoreForBestCheck) {
+      checkBestScore(state);
+      lastScoreForBestCheck = state.score;
+    }
     refresh();
   }
 
@@ -78,6 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     restart: () => {
       state = resetGameState(state);
+      lastScoreForBestCheck = state.score;
       board = createBoard();
       stopGravityLoop();
       refresh();
@@ -88,6 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Reset best score button
   resetBestBtn.addEventListener('click', () => {
     resetBestScore(state);
+    lastScoreForBestCheck = state.score;
     refresh();
   });
 
