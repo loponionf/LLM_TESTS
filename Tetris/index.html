@@ -10,16 +10,23 @@
   <div id="game-container">
     <canvas id="board" width="300" height="600"></canvas>
 
-    <div id="hud">
-      <div>Score: <span id="score">0</span></div>
-      <div>Level: <span id="level">1</span></div>
-      <div>Lines: <span id="lines">0</span></div>
+    <div id="side-panel">
+      <div id="hud">
+        <div class="hud-row"><span class="hud-label">Score</span><span class="hud-value" id="score">0</span></div>
+        <div class="hud-row"><span class="hud-label">Level</span><span class="hud-value" id="level">1</span></div>
+        <div class="hud-row"><span class="hud-label">Lines</span><span class="hud-value" id="lines">0</span></div>
+      </div>
+
+      <div id="next-piece-container">
+        <span id="next-piece-label">Next</span>
+        <canvas id="next-piece" width="120" height="120"></canvas>
+      </div>
+
+      <div id="button-row">
+        <button id="pause-btn">Pause</button>
+        <button id="restart-btn">Restart</button>
+      </div>
     </div>
-
-    <canvas id="next-piece" width="120" height="120"></canvas>
-
-    <button id="pause-btn">Pause</button>
-    <button id="restart-btn">Restart</button>
 
     <div id="game-over" style="display:none;"></div>
   </div>
