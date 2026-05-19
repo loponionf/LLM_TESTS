@@ -32,13 +32,36 @@ function fillCell(ctx, x, y, color) {
 }
 
 /**
+ * Draw a ghost cell — translucent outline only.
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {number} x - grid column
+ * @param {number} y - grid row
+ * @param {string} color
+ */
+function fillGhostCell(ctx, x, y, color) {
+  const px = x * CELL_SIZE;
+  const py = y * CELL_SIZE;
+  const inset = 1;
+
+  // Translucent fill
+  ctx.fillStyle = color + '22';
+  ctx.fillRect(px + inset, py + inset, CELL_SIZE - inset * 2, CELL_SIZE - inset * 2);
+
+  // Outline border
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(px + inset + 1, py + inset + 1, CELL_SIZE - inset * 2 - 2, CELL_SIZE - inset * 2 - 2);
+}
+
+/**
  * Render the board grid and any locked cells onto the board canvas.
- * Optionally draws an active piece on top.
+ * Optionally draws a ghost piece and an active piece on top.
  * @param {HTMLCanvasElement} canvas
  * @param {Array<Array|null>} board - 2D grid of null | { name, color }
  * @param {object|null} [activePiece] - { name, color, shape, x, y } or null
+ * @param {{x: number, y: number}|null} [ghostPosition] - Ghost landing position or null
  */
-export function renderBoard(canvas, board, activePiece) {
+export function renderBoard(canvas, board, activePiece, ghostPosition) {
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -51,6 +74,18 @@ export function renderBoard(canvas, board, activePiece) {
     for (let c = 0; c < board[r].length; c++) {
       if (board[r][c]) {
         fillCell(ctx, c, r, board[r][c].color);
+      }
+    }
+  }
+
+  // Draw ghost piece below active piece
+  if (activePiece && ghostPosition) {
+    const shape = activePiece.shape;
+    for (let r = 0; r < shape.length; r++) {
+      for (let c = 0; c < shape[r].length; c++) {
+        if (shape[r][c]) {
+          fillGhostCell(ctx, ghostPosition.x + c, ghostPosition.y + r, activePiece.color);
+        }
       }
     }
   }
