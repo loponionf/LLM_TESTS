@@ -15,6 +15,23 @@ A compact Kanban-style task board:
 - focused tests;
 - clear README and validation notes.
 
+## Launching locally
+
+### Windows (batch launcher)
+
+Double-click `launch_localboard.bat` in the `LocalBoard/` directory.
+The script checks that `node_modules` exists and starts the Vite dev server.
+
+### Manual steps (Windows, macOS, Linux)
+
+```bat
+cd LocalBoard
+npm install
+npm run dev
+```
+
+Open [http://localhost:5173](http://localhost:5173) in your browser.
+
 ## Process rule
 
 Each implementation step should be handled as one atomic GitHub issue and one pull request.
