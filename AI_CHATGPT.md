@@ -470,6 +470,7 @@ ChatGPT reviews Claude Code pull requests before they are accepted.
 The review should check:
 
 - Does the PR match the issue scope?
+- Does the PR preserve the expected project state from already merged or closed issues?
 - Are there unrelated changes?
 - Is the implementation smaller than the problem?
 - Are tests added or updated when appropriate?
@@ -480,6 +481,24 @@ The review should check:
 - For blocked/failing-test PRs: is the failure documented clearly enough for ChatGPT to guide the next prompt?
 - For corrective PRs: does the fix target the actual reviewed error without rewriting unrelated work?
 - For mapping PRs: do the map claims match the inspected source files, and are hypotheses/unknowns labelled correctly?
+
+### Expected-state and closed-issue guard
+
+Before calling a diff item unrelated, out of scope, or removable, ChatGPT must verify whether that code belongs to the expected repository state.
+
+Required review rule:
+
+```text
+Do not request removal of a feature only because it is outside the current issue.
+First check whether the feature was introduced or validated by a previous closed issue, merged PR, or accepted project state.
+If yes, preserve it and only review whether the current PR regressed it.
+```
+
+This is especially important when several local-AI tasks are chained and branches may contain work from earlier issues.
+A feature that is outside the current issue can still be part of the expected baseline.
+
+When unsure, ChatGPT should search closed issues and merged PRs before giving a corrective prompt that removes code.
+If a correction prompt has already asked Claude Code to remove a feature that turns out to be previously accepted, ChatGPT must immediately reverse the instruction and tell Claude Code to preserve or restore that feature.
 
 If the PR is incomplete, ChatGPT should request changes clearly and provide a corrective prompt for Claude Code. Because Jean-Paul normally uses `/clear`, corrective prompts should also be self-contained.
 
@@ -598,7 +617,8 @@ Claude Code with local AI backend must avoid:
 - writing architectural claims into maps without source evidence;
 - repeatedly guessing fixes for failing tests until context is exhausted;
 - discarding useful PR work just because one localized error exists;
-- retrying the same oversized task unchanged after a full failure.
+- retrying the same oversized task unchanged after a full failure;
+- deleting or removing a previously accepted feature just because it is outside the current issue.
 
 When uncertain, Claude Code should stop and report:
 
@@ -626,10 +646,11 @@ When Jean-Paul provides a PR number or PR link, ChatGPT should:
 1. Fetch PR metadata and diff.
 2. Review scope against the issue/prompt.
 3. Inspect changed files and relevant tests.
-4. Give an approve/request-changes style conclusion.
-5. Merge the PR if it is acceptable and no manual validation blocker remains.
-6. Close/update the related issue after merge when acceptance criteria are satisfied.
-7. Provide a corrective prompt if changes are needed.
+4. Check whether apparently out-of-scope changes belong to already closed issues, merged PRs, or accepted baseline behavior.
+5. Give an approve/request-changes style conclusion.
+6. Merge the PR if it is acceptable and no manual validation blocker remains.
+7. Close/update the related issue after merge when acceptance criteria are satisfied.
+8. Provide a corrective prompt if changes are needed.
 ```
 
 When Jean-Paul provides a blocked/failing-test PR, ChatGPT should:
