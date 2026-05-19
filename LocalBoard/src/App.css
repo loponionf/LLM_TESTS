@@ -1,0 +1,23 @@
+.localboard {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.localboard h1 {
+  font-size: 2rem;
+  margin-bottom: 0.25rem;
+}
+
+.subtitle {
+  color: #666;
+  margin-bottom: 2rem;
+}
+
+.placeholder {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 3rem;
+  color: #999;
+}

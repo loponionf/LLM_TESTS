@@ -4,8 +4,6 @@ LocalBoard is the second local-LLM coding test application for this repository.
 
 Goal: build a small offline-first Kanban board through GitHub issues, Claude Code prompts, pull requests, and ChatGPT review.
 
-This folder is intentionally minimal for now. The actual application scaffold must be created by Claude Code using the local AI backend from a dedicated GitHub issue and pull request.
-
 ## Target application
 
 A compact Kanban-style task board:
