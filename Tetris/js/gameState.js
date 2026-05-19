@@ -1,5 +1,5 @@
 import { BOARD_WIDTH, SCORING, INITIAL_LEVEL, LINES_PER_LEVEL } from './constants.js';
-import { getRandomTetromino } from './pieces.js';
+import { getRandomTetromino, getTetromino } from './pieces.js';
 
 const BEST_SCORE_KEY = 'tetris.bestScore';
 
@@ -51,7 +51,7 @@ export function resetBestScore(state) {
  * Spawn a piece at the top-center of the board.
  * @returns {object} { name, color, shape, x, y }
  */
-function spawnPiece() {
+export function spawnPiece() {
   const tet = getRandomTetromino();
   const shape = tet.shapes[0];
   const y = 0;
@@ -179,22 +179,21 @@ export function performHold(state) {
   state.canHold = false;
 
   if (!state.heldPiece) {
-    // Store current piece, spawn fresh
+    // Store current piece in hold, spawn a new active from nextPiece queue
     state.heldPiece = { name: currentActive.name, color: currentActive.color };
-    const tet = getRandomTetromino();
-    const shape = tet.shapes[0];
-    const y = 0;
-    const x = Math.floor((BOARD_WIDTH - shape[0].length) / 2);
-    state.activePiece = { name: tet.name, color: tet.color, shape, x, y };
+    const next = state.nextPiece;
+    if (next) {
+      setActivePiece(state, next);
+      setNextPiece(state, spawnPiece());
+    }
   } else {
-    // Swap: held piece becomes active (fresh spawn position)
+    // Swap: store current active in hold, activate previous held piece at fresh position
     const held = state.heldPiece;
-    const tet = getRandomTetromino();
-    const shape = tet.shapes[0];
+    state.heldPiece = { name: currentActive.name, color: currentActive.color };
+    const shape = getTetromino(held.name).shapes[0];
     const y = 0;
     const x = Math.floor((BOARD_WIDTH - shape[0].length) / 2);
     state.activePiece = { name: held.name, color: held.color, shape, x, y };
-    state.heldPiece = { name: tet.name, color: tet.color };
   }
 
   return true;
