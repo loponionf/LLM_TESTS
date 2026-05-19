@@ -220,3 +220,103 @@ button:active {
   font-weight: 700;
   letter-spacing: 2px;
 }
+
+/* ── Start overlay ── */
+
+#start-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 10;
+  background: rgba(10, 10, 15, 0.92);
+  padding: 32px 48px;
+  border-radius: 12px;
+  border: 1px solid #2a2a3a;
+}
+
+#start-overlay h1 {
+  font-size: 42px;
+  color: #7b6ff0;
+  letter-spacing: 6px;
+  margin-bottom: 16px;
+  text-shadow: 0 0 20px rgba(123, 111, 240, 0.4);
+}
+
+#start-overlay p {
+  color: #8888a0;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+#start-btn {
+  margin-top: 18px;
+  padding: 12px 36px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  background: #2a2a4e;
+  border-color: #5a5a8a;
+  color: #e0e0ff;
+}
+
+#start-btn:hover {
+  background: #3a3a6e;
+  border-color: #7a7aaa;
+  color: #fff;
+}
+
+.start-hint {
+  margin-top: 12px !important;
+  font-size: 12px !important;
+  color: #5a5a7a !important;
+}
+
+/* ── Pause overlay ── */
+
+#pause-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 36px;
+  color: #e8e8ff;
+  text-align: center;
+  z-index: 10;
+  background: rgba(10, 10, 15, 0.85);
+  padding: 24px 48px;
+  border-radius: 12px;
+  border: 1px solid #3a3a5a;
+  letter-spacing: 3px;
+  font-weight: 700;
+}
+
+/* ── Game-over overlay (enhanced) ── */
+
+#game-over {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 32px;
+  color: #f44;
+  text-align: center;
+  text-shadow: 0 0 16px rgba(255, 68, 68, 0.4);
+  font-weight: 700;
+  letter-spacing: 2px;
+  z-index: 10;
+  background: rgba(10, 10, 15, 0.85);
+  padding: 24px 48px;
+  border-radius: 12px;
+  border: 1px solid #4a2a2a;
+}
+
+#game-over .final-score {
+  display: block;
+  font-size: 16px;
+  color: #aaa;
+  margin-top: 8px;
+  letter-spacing: 0;
+  font-weight: 400;
+}

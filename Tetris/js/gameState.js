@@ -72,6 +72,7 @@ export function createInitialState(bestScore) {
     lines: 0,
     paused: false,
     gameOver: false,
+    ready: true,
     bestScore: bestScore ?? 0,
     activePiece: active,
     nextPiece: next,
@@ -90,12 +91,21 @@ export function resetGameState(state) {
 }
 
 /**
- * Toggle paused flag. No-op when game is over.
+ * Transition from ready → playing.
+ * @param {object} state
+ */
+export function startGame(state) {
+  state.ready = false;
+  state.paused = false;
+}
+
+/**
+ * Toggle paused flag. No-op when game is over or still ready.
  * @param {object} state
  * @returns {boolean} New paused value.
  */
 export function togglePause(state) {
-  if (state.gameOver) return state.paused;
+  if (state.gameOver || state.ready) return state.paused;
   state.paused = !state.paused;
   return state.paused;
 }

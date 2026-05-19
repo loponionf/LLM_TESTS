@@ -3,6 +3,7 @@ import {
   createInitialState,
   resetGameState,
   togglePause,
+  startGame,
   loadBestScore,
   checkBestScore,
   resetBestScore,
@@ -31,6 +32,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const holdPieceEl = document.getElementById('hold-piece');
   const nextPieceEl = document.getElementById('next-piece');
   const gameOverEl = document.getElementById('game-over');
+  const startOverlayEl = document.getElementById('start-overlay');
+  const pauseOverlayEl = document.getElementById('pause-overlay');
+  const startBtn = document.getElementById('start-btn');
   const resetBestBtn = document.getElementById('reset-best-btn');
 
   // Initialize game state and board
@@ -48,10 +52,24 @@ document.addEventListener('DOMContentLoaded', () => {
     renderNextPiece(nextPieceEl, state.nextPiece);
     updateHUD(scoreEl, levelEl, linesEl, bestEl, state);
 
-    // Show game over overlay if applicable
+    // Start overlay: visible when ready
+    if (state.ready) {
+      startOverlayEl.style.display = 'block';
+    } else {
+      startOverlayEl.style.display = 'none';
+    }
+
+    // Pause overlay
+    if (state.paused) {
+      pauseOverlayEl.style.display = 'block';
+    } else {
+      pauseOverlayEl.style.display = 'none';
+    }
+
+    // Game over overlay
     if (state.gameOver) {
       gameOverEl.style.display = 'block';
-      gameOverEl.textContent = 'GAME OVER';
+      gameOverEl.innerHTML = `GAME OVER<span class="final-score">Score: ${state.score}</span>`;
     } else {
       gameOverEl.style.display = 'none';
     }
@@ -72,11 +90,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Wire input callbacks
   setupInputHandlers({
-    moveLeft: () => { if (!state.gameOver && !state.paused) { moveLeft(board, state); refresh(); } },
-    moveRight: () => { if (!state.gameOver && !state.paused) { moveRight(board, state); refresh(); } },
-    softDrop: () => { if (!state.gameOver && !state.paused) { moveDown(board, state); refreshAfterScore(); } },
-    hardDrop: () => { if (!state.gameOver && !state.paused) { hardDrop(board, state); refreshAfterScore(); } },
-    rotate: () => { if (!state.gameOver && !state.paused) { rotatePiece(board, state); refresh(); } },
+    moveLeft: () => { if (!state.gameOver && !state.paused && !state.ready) { moveLeft(board, state); refresh(); } },
+    moveRight: () => { if (!state.gameOver && !state.paused && !state.ready) { moveRight(board, state); refresh(); } },
+    softDrop: () => { if (!state.gameOver && !state.paused && !state.ready) { moveDown(board, state); refreshAfterScore(); } },
+    hardDrop: () => { if (!state.gameOver && !state.paused && !state.ready) { hardDrop(board, state); refreshAfterScore(); } },
+    rotate: () => { if (!state.gameOver && !state.paused && !state.ready) { rotatePiece(board, state); refresh(); } },
     togglePause: () => {
       const wasPaused = togglePause(state);
       refresh();
@@ -87,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     },
     hold: () => {
-      if (!state.gameOver && !state.paused) {
+      if (!state.gameOver && !state.paused && !state.ready) {
         performHold(state);
         refresh();
       }
@@ -102,6 +120,23 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   });
 
+  // Start button
+  startBtn.addEventListener('click', () => {
+    startGame(state);
+    refresh();
+    startGravityLoop(board, state, refreshAfterScore);
+  });
+
+  // Enter key: start if ready, otherwise no-op (pause/restart have their own handlers)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && state.ready) {
+      e.preventDefault();
+      startGame(state);
+      refresh();
+      startGravityLoop(board, state, refreshAfterScore);
+    }
+  });
+
   // Reset best score button
   resetBestBtn.addEventListener('click', () => {
     resetBestScore(state);
@@ -109,10 +144,10 @@ document.addEventListener('DOMContentLoaded', () => {
     refresh();
   });
 
-  // Start automatic gravity
-  startGravityLoop(board, state, refreshAfterScore);
+  // Do NOT start gravity until the user presses Start
+  // startGravityLoop(board, state, refreshAfterScore);
 
-  // Initial render
+  // Initial render (shows start overlay)
   refresh();
 
   console.log('Tetris V1 initialized');
