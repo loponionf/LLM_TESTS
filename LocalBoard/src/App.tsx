@@ -1,41 +1,8 @@
 import './App.css'
+import { COLUMNS, PRIORITY_COLORS, cardsByColumn, DEMO_TASKS } from './domain/tasks'
+import type { Task } from './domain/tasks'
 
-interface Card {
-  id: number
-  title: string
-  description: string
-  priority: 'low' | 'medium' | 'high'
-}
-
-const COLUMNS = [
-  { id: 'backlog', label: 'Backlog' },
-  { id: 'todo', label: 'Todo' },
-  { id: 'in-progress', label: 'In Progress' },
-  { id: 'done', label: 'Done' },
-] as const
-
-const CARDS: Card[] = [
-  { id: 1, title: 'Setup project', description: 'Initialize Vite + React + TypeScript', priority: 'high' },
-  { id: 2, title: 'Define column types', description: 'Backlog, Todo, In Progress, Done', priority: 'medium' },
-  { id: 3, title: 'Design card component', description: 'Show title, description, priority badge', priority: 'medium' },
-  { id: 4, title: 'Add drag and drop', description: 'Move cards between columns', priority: 'low' },
-  { id: 5, title: 'Persist to localStorage', description: 'Save board state on every change', priority: 'low' },
-]
-
-const CARDS_BY_COLUMN: Record<string, Card[]> = {
-  backlog: [CARDS[0]],
-  todo: [CARDS[1], CARDS[2]],
-  'in-progress': [CARDS[3]],
-  done: [CARDS[4]],
-}
-
-const PRIORITY_COLORS: Record<string, string> = {
-  low: '#2ea44f',
-  medium: '#d29922',
-  high: '#da3633',
-}
-
-function CardItem({ card }: { card: Card }) {
+function CardItem({ card }: { card: Task }) {
   return (
     <div className="kb-card">
       <span className="kb-card-title">{card.title}</span>
@@ -46,11 +13,14 @@ function CardItem({ card }: { card: Card }) {
       >
         {card.priority}
       </span>
+      {card.tags.length > 0 && (
+        <span className="kb-card-tags">{card.tags.join(', ')}</span>
+      )}
     </div>
   )
 }
 
-function Column({ label, cards }: { label: string; cards: Card[] }) {
+function Column({ label, cards }: { label: string; cards: Task[] }) {
   return (
     <section className="kb-column" aria-label={label}>
       <h2 className="kb-column-title">
@@ -67,6 +37,8 @@ function Column({ label, cards }: { label: string; cards: Card[] }) {
 }
 
 function App() {
+  const grouped = cardsByColumn(DEMO_TASKS)
+
   return (
     <main className="localboard">
       <h1>LocalBoard</h1>
@@ -76,7 +48,7 @@ function App() {
           <Column
             key={column.id}
             label={column.label}
-            cards={CARDS_BY_COLUMN[column.id] ?? []}
+            cards={grouped[column.id]}
           />
         ))}
       </div>

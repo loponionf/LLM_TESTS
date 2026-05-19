@@ -90,3 +90,8 @@
   border-radius: 4px;
   text-transform: capitalize;
 }
+
+.kb-card-tags {
+  font-size: 0.7rem;
+  color: #57606a;
+}
