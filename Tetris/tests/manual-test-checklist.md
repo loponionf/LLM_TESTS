@@ -66,7 +66,7 @@
 
 ## 8. Pause / Resume
 
-- [ ] Pressing **Space** toggles pause (via `#pause-btn` click or key — whichever is wired).
+- [ ] Clicking the **Pause** button (`#pause-btn`) pauses the game.
 - [ ] While paused, the piece stops falling and no gravity ticks occur.
 - [ ] Resuming from pause continues the game from the exact same state.
 - [ ] Pause does not work when the game is over.
