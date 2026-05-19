@@ -179,21 +179,23 @@ export function performHold(state) {
   state.canHold = false;
 
   if (!state.heldPiece) {
-    // Store current piece in hold, spawn a new active from nextPiece queue
-    state.heldPiece = { name: currentActive.name, color: currentActive.color };
+    // Store current piece in hold (full renderable object), spawn a new active from nextPiece queue
+    const shape = getTetromino(currentActive.name).shapes[0];
+    state.heldPiece = { name: currentActive.name, color: currentActive.color, shape };
     const next = state.nextPiece;
     if (next) {
       setActivePiece(state, next);
       setNextPiece(state, spawnPiece());
     }
   } else {
-    // Swap: store current active in hold, activate previous held piece at fresh position
+    // Swap: store current active in hold (full renderable object), activate previous held piece at fresh position
     const held = state.heldPiece;
-    state.heldPiece = { name: currentActive.name, color: currentActive.color };
-    const shape = getTetromino(held.name).shapes[0];
+    const holdShape = getTetromino(currentActive.name).shapes[0];
+    state.heldPiece = { name: currentActive.name, color: currentActive.color, shape: holdShape };
+    const activeShape = getTetromino(held.name).shapes[0];
     const y = 0;
-    const x = Math.floor((BOARD_WIDTH - shape[0].length) / 2);
-    state.activePiece = { name: held.name, color: held.color, shape, x, y };
+    const x = Math.floor((BOARD_WIDTH - activeShape[0].length) / 2);
+    state.activePiece = { name: held.name, color: held.color, shape: activeShape, x, y };
   }
 
   return true;
