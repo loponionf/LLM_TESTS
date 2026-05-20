@@ -196,13 +196,75 @@ export function getTetromino(name) {
 }
 
 /**
- * Return a random tetromino definition.
- * @returns {object} Random tetromino definition.
+ * 7-bag randomizer: ensures all 7 tetrominoes appear once per bag
+ * before a new shuffled bag begins.
+ */
+export class BagRandomizer {
+  constructor() {
+    this._bag = [];
+    this._queue = []; // pre-filled upcoming pieces
+  }
+
+  /**
+   * Return the next tetromino name from the 7-bag system.
+   * Refills and reshuffles the bag when empty.
+   * @returns {string} Tetromino name.
+   */
+  next() {
+    if (this._bag.length === 0) {
+      this._refill();
+    }
+    return this._bag.pop();
+  }
+
+  /**
+   * Return the next N upcoming tetromino names without consuming them.
+   * @param {number} count - How many upcoming pieces to peek at.
+   * @returns {string[]} Array of tetromino names.
+   */
+  peek(count = 1) {
+    while (this._queue.length < count) {
+      if (this._bag.length === 0) {
+        this._refill();
+      }
+      this._queue.push(this._bag.pop());
+    }
+    return this._queue.slice(0, count);
+  }
+
+  /**
+   * Reset the randomizer to a fresh state.
+   */
+  reset() {
+    this._bag = [];
+    this._queue = [];
+  }
+
+  _refill() {
+    const keys = Object.keys(TETROMINOES);
+    // Fisher-Yates shuffle
+    for (let i = keys.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [keys[i], keys[j]] = [keys[j], keys[i]];
+    }
+    this._bag = keys.slice();
+    // Drain the bag into the queue so peek can access them
+    while (this._bag.length > 0) {
+      this._queue.push(this._bag.pop());
+    }
+  }
+}
+
+// Singleton instance shared across modules
+export const randomizer = new BagRandomizer();
+
+/**
+ * Return the next tetromino definition from the 7-bag randomizer.
+ * @returns {object} Tetromino definition.
  */
 export function getRandomTetromino() {
-  const keys = Object.keys(TETROMINOES);
-  const randomKey = keys[Math.floor(Math.random() * keys.length)];
-  return TETROMINOES[randomKey];
+  const name = randomizer.next();
+  return TETROMINOES[name];
 }
 
 // Export the full list of names for iteration

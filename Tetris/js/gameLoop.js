@@ -6,7 +6,7 @@ import {
 import { isValidPosition, lockPiece as lockPieceBoard, clearLines } from './board.js';
 import { getTetromino } from './pieces.js';
 import { getRandomTetromino } from './pieces.js';
-import { applyLineClear, setActivePiece, setNextPiece, setGameOver, resetHold } from './gameState.js';
+import { applyLineClear, setActivePiece, setNextPiece, setGameOver, resetHold, getNextQueue } from './gameState.js';
 
 /**
  * Movement helpers for the active piece.
@@ -149,6 +149,8 @@ export function lockAndSpawn(board, state) {
   if (freshDef && !isValidPosition(board, freshDef, newActive.x, newActive.y, newActive.rotationIndex || 0)) {
     setGameOver(state);
   }
+
+  // The next queue is auto-maintained by the BagRandomizer; no extra work needed here.
 }
 
 // Module-level interval id and level tracker for the gravity loop.
