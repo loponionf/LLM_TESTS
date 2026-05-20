@@ -632,9 +632,25 @@ PR URL: <url>
 Commit SHA: <sha>
 ```
 
+### Approved PR finalization workflow
+
+When ChatGPT or Jean-Paul explicitly says a PR has been reviewed, approved, and is ready to merge, Claude Code/Qwen may perform the full finalization sequence: merge, verify, branch cleanup, and issue closure.
+
+This workflow applies only on explicit approval. Qwen must not merge draft, blocked, failing-test, unreviewed, ambiguous, or manually-validatable PRs.
+
+Pre-merge: `gh pr view <number> --json state,mergeable,headRefName,baseRefName,url`
+Merge: `gh pr merge <number> --squash --delete-branch=false`
+Post-merge verify: `gh pr view <number> --json state,mergedAt,headRefName,baseRefName,url`
+
+Branch cleanup (after confirmed merge with non-null `mergedAt`): delete only the branch matching `headRefName` using `git branch -d` and `git push origin --delete`. Preserve all safety rules: never delete `main`, never run `git clean`, never delete files/folders/untracked content, never use `git branch -D` without Jean-Paul confirmation, stop and report if `git status --short` is not clean (except `.claude/`) or `git branch -d` refuses.
+
+Issue closure (after confirmed merge): close only when the issue is clearly related to the PR, acceptance criteria are satisfied, and ChatGPT or Jean-Paul explicitly allowed closure.
+
+Report: PR state, branch cleanup state, issue closure state, safety confirmations.
+
 ### Post-merge branch cleanup rule
 
-After ChatGPT merges a PR and closes the related issue, ChatGPT should prepare a narrow Claude Code/Qwen prompt to delete the merged PR branch.
+When ChatGPT has already merged a PR and closed the related issue through other means, ChatGPT should prepare a narrow Claude Code/Qwen prompt to delete the merged PR branch.
 
 Rules for branch cleanup:
 
