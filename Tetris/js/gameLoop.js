@@ -185,6 +185,10 @@ export function lockAndSpawn(board, state) {
 // Module-level timeout id for the lock delay timer.
 let lockDelayTimeoutId = null;
 
+// Module-level reference to the latest refresh callback, used by the
+// lock-delay timeout path so it can re-render after locking.
+let latestRefreshCallback = null;
+
 /**
  * Clear any pending lock delay timeout.
  */
@@ -230,6 +234,7 @@ function startOrRestartLockDelayTimer(board, state) {
     if (!state.isGrounded) return;
     if (isValidPosition(board, def, p.x, p.y + 1, p.rotationIndex || 0)) return;
     lockAndSpawn(board, state);
+    if (latestRefreshCallback) latestRefreshCallback();
   }, LOCK_DELAY_MS);
 }
 
@@ -274,6 +279,7 @@ export function getGravityDelay(level) {
  */
 export function startGravityLoop(board, state, refresh) {
   stopGravityLoop();
+  latestRefreshCallback = refresh;
   const delay = getGravityDelay(state.level);
   gravityLoopLevel = state.level;
   gravityIntervalId = setInterval(() => {
@@ -295,6 +301,7 @@ export function stopGravityLoop() {
     gravityIntervalId = null;
   }
   gravityLoopLevel = null;
+  latestRefreshCallback = null;
   clearLockDelayTimer();
 }
 
