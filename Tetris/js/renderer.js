@@ -156,7 +156,7 @@ export function renderNextQueue(canvas, pieceNames) {
   if (!pieceNames || pieceNames.length === 0) return;
 
   // Use a smaller cell size for the queue preview
-  const qCellSize = 14;
+  const qCellSize = 17;
 
   for (let i = 0; i < pieceNames.length; i++) {
     const tet = getTetromino(pieceNames[i]);
