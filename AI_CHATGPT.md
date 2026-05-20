@@ -94,6 +94,7 @@ Idea or bug
 → Jean-Paul performs real validation when needed
 → ChatGPT merges the PR when acceptable
 → ChatGPT closes the related issue when evidence is sufficient
+→ ChatGPT asks Claude Code/Qwen to clean up the merged PR branch
 ```
 
 For development tasks, prefer:
@@ -630,6 +631,23 @@ PR: #<number>
 PR URL: <url>
 Commit SHA: <sha>
 ```
+
+### Post-merge branch cleanup rule
+
+After ChatGPT merges a PR and closes the related issue, ChatGPT should prepare a narrow Claude Code/Qwen prompt to delete the merged PR branch.
+
+Rules for branch cleanup:
+
+- Cleanup happens only after the PR is merged and the related issue is closed or confirmed ready for cleanup.
+- Delete only the branch associated with the merged PR.
+- Use `git branch -d <branch>` for local branch cleanup.
+- Use `git push origin --delete <branch>` for remote branch cleanup.
+- Never delete `main`.
+- Never run `git clean` during branch cleanup.
+- Never delete files, folders, or untracked content.
+- Never use `git branch -D` unless Jean-Paul explicitly confirms.
+- If `git status --short` is not clean (except allowed `.claude/`), stop and report.
+- If `git branch -d` refuses because the branch is not fully merged, stop and report.
 
 ## 14. Claude Code / local AI safety rules
 
