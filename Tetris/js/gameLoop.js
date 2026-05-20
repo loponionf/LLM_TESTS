@@ -2,6 +2,7 @@ import {
   GRAVITY_INITIAL,
   GRAVITY_MIN,
   GRAVITY_STEP,
+  LOCK_DELAY_MS,
 } from './constants.js';
 import { isValidPosition, lockPiece as lockPieceBoard, clearLines } from './board.js';
 import { getTetromino } from './pieces.js';
@@ -28,6 +29,10 @@ export function moveLeft(board, state) {
   if (isValidPosition(board, def, p.x - 1, p.y, p.rotationIndex || 0)) {
     p.x -= 1;
   }
+  // Moving a grounded piece (valid or invalid) resets the lock delay
+  if (state.isGrounded) {
+    startOrRestartLockDelayTimer(board, state);
+  }
 }
 
 /**
@@ -41,11 +46,16 @@ export function moveRight(board, state) {
   if (isValidPosition(board, def, p.x + 1, p.y, p.rotationIndex || 0)) {
     p.x += 1;
   }
+  // Moving a grounded piece (valid or invalid) resets the lock delay
+  if (state.isGrounded) {
+    startOrRestartLockDelayTimer(board, state);
+  }
 }
 
 /**
  * Move the active piece one row down.
- * If the piece cannot move further down, lock it and spawn a new piece.
+ * If the piece cannot move further down, mark it as grounded and
+ * start (or restart) the lock delay timer.
  */
 export function moveDown(board, state) {
   const p = state.activePiece;
@@ -53,14 +63,20 @@ export function moveDown(board, state) {
   const def = getTetromino(p.name);
   if (!def) return;
   if (isValidPosition(board, def, p.x, p.y + 1, p.rotationIndex || 0)) {
+    // Moved down — no longer grounded, clear any pending lock delay
+    state.isGrounded = false;
+    state.lockDelayStart = null;
+    clearLockDelayTimer();
     p.y += 1;
   } else {
-    lockAndSpawn(board, state);
+    // Cannot move down — piece is grounded
+    markGrounded(board, state);
   }
 }
 
 /**
  * Move the active piece to the lowest valid row and lock it.
+ * Hard drop bypasses lock delay and locks immediately.
  */
 export function hardDrop(board, state) {
   const p = state.activePiece;
@@ -70,6 +86,10 @@ export function hardDrop(board, state) {
   while (isValidPosition(board, def, p.x, p.y + 1, p.rotationIndex || 0)) {
     p.y += 1;
   }
+  // Hard drop: clear lock delay state and lock immediately
+  clearLockDelayTimer();
+  state.isGrounded = false;
+  state.lockDelayStart = null;
   lockAndSpawn(board, state);
 }
 
@@ -87,6 +107,10 @@ export function rotatePiece(board, state) {
   if (isValidPosition(board, def, p.x, p.y, nextRot)) {
     p.rotationIndex = nextRot;
     p.shape = def.shapes[nextRot];
+  }
+  // Rotating a grounded piece (valid or invalid) resets the lock delay
+  if (state.isGrounded) {
+    startOrRestartLockDelayTimer(board, state);
   }
 }
 
@@ -150,12 +174,69 @@ export function lockAndSpawn(board, state) {
     setGameOver(state);
   }
 
+  // Clear lock delay state for the newly spawned piece
+  clearLockDelayTimer();
+  state.isGrounded = false;
+  state.lockDelayStart = null;
+
   // The next queue is auto-maintained by the BagRandomizer; no extra work needed here.
 }
 
-// Module-level interval id and level tracker for the gravity loop.
-let gravityIntervalId = null;
-let gravityLoopLevel = null;
+// Module-level timeout id for the lock delay timer.
+let lockDelayTimeoutId = null;
+
+// Module-level reference to the latest refresh callback, used by the
+// lock-delay timeout path so it can re-render after locking.
+let latestRefreshCallback = null;
+
+/**
+ * Clear any pending lock delay timeout.
+ */
+function clearLockDelayTimer() {
+  if (lockDelayTimeoutId !== null) {
+    clearTimeout(lockDelayTimeoutId);
+    lockDelayTimeoutId = null;
+  }
+}
+
+/**
+ * Mark the active piece as grounded and start (or restart) the
+ * setTimeout-based lock delay. When the timeout fires, lock the
+ * piece and spawn a new one — independent of gravity tick timing.
+ *
+ * @param {Array<Array|null>} board
+ * @param {object} state
+ */
+function markGrounded(board, state) {
+  state.isGrounded = true;
+  startOrRestartLockDelayTimer(board, state);
+}
+
+/**
+ * Start or restart the lock delay setTimeout.
+ * If a timer is already running, it is cleared and restarted.
+ *
+ * @param {Array<Array|null>} board
+ * @param {object} state
+ */
+function startOrRestartLockDelayTimer(board, state) {
+  clearLockDelayTimer();
+  state.lockDelayStart = Date.now();
+  lockDelayTimeoutId = setTimeout(() => {
+    lockDelayTimeoutId = null;
+    // Only lock if conditions are still valid
+    if (state.paused || state.gameOver || !state.activePiece) return;
+    const p = state.activePiece;
+    if (!p) return;
+    const def = getTetromino(p.name);
+    if (!def) return;
+    // Verify the piece is still grounded (hasn't been nudged)
+    if (!state.isGrounded) return;
+    if (isValidPosition(board, def, p.x, p.y + 1, p.rotationIndex || 0)) return;
+    lockAndSpawn(board, state);
+    if (latestRefreshCallback) latestRefreshCallback();
+  }, LOCK_DELAY_MS);
+}
 
 /**
  * Compute the landing position for the active piece (ghost).
@@ -190,7 +271,7 @@ export function getGravityDelay(level) {
 /**
  * Start the automatic gravity loop.
  * Each tick attempts to move the active piece down; if it cannot,
- * lockAndSpawn handles locking and spawning a new piece.
+ * the lock delay timer (independent of gravity) will handle locking.
  *
  * @param {Array<Array|null>} board
  * @param {object} state - Game state object (read for paused/gameOver/level).
@@ -198,6 +279,7 @@ export function getGravityDelay(level) {
  */
 export function startGravityLoop(board, state, refresh) {
   stopGravityLoop();
+  latestRefreshCallback = refresh;
   const delay = getGravityDelay(state.level);
   gravityLoopLevel = state.level;
   gravityIntervalId = setInterval(() => {
@@ -219,6 +301,8 @@ export function stopGravityLoop() {
     gravityIntervalId = null;
   }
   gravityLoopLevel = null;
+  latestRefreshCallback = null;
+  clearLockDelayTimer();
 }
 
 /**
@@ -233,3 +317,7 @@ export function restartGravityLoop(board, state, refresh) {
   stopGravityLoop();
   startGravityLoop(board, state, refresh);
 }
+
+// Module-level interval id and level tracker for the gravity loop.
+let gravityIntervalId = null;
+let gravityLoopLevel = null;
