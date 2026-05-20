@@ -20,6 +20,10 @@ export const GRAVITY_INITIAL = 1000;
 export const GRAVITY_MIN = 100;
 export const GRAVITY_STEP = 50; // ms faster per level
 
+// Lock delay: time (ms) a grounded piece waits before auto-locking.
+// Hard drop bypasses this delay and locks immediately.
+export const LOCK_DELAY_MS = 500;
+
 // Key bindings
 export const KEY_LEFT = 'ArrowLeft';
 export const KEY_RIGHT = 'ArrowRight';

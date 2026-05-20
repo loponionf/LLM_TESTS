@@ -36,16 +36,18 @@ export function resetBestScore(state) {
  * Game state container.
  *
  * Shape:
- *   score       – number
- *   level       – number
- *   lines       – total accumulated cleared lines
- *   paused      – boolean
- *   gameOver    – boolean
- *   ready       – boolean (true before gameplay has started)
- *   activePiece – { name, color, shape, x, y } or null
- *   nextPiece   – { name, color, shape, x, y } or null
- *   heldPiece   – { name, color, shape, x, y } or null
- *   canHold     – boolean (once per piece)
+ *   score              – number
+ *   level              – number
+ *   lines              – total accumulated cleared lines
+ *   paused             – boolean
+ *   gameOver           – boolean
+ *   ready              – boolean (true before gameplay has started)
+ *   activePiece        – { name, color, shape, x, y } or null
+ *   nextPiece          – { name, color, shape, x, y } or null
+ *   heldPiece          – { name, color, shape, x, y } or null
+ *   canHold            – boolean (once per piece)
+ *   lockDelayStart     – number (Date.now()) or null — when the current piece started its lock delay
+ *   isGrounded         – boolean — whether the active piece cannot move down
  */
 
 /**
@@ -121,6 +123,8 @@ export function createInitialState(bestScore) {
     nextPiece: next,
     heldPiece: null,
     canHold: true,
+    lockDelayStart: null,
+    isGrounded: false,
   };
 }
 
