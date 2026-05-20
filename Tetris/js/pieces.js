@@ -202,19 +202,32 @@ export function getTetromino(name) {
 export class BagRandomizer {
   constructor() {
     this._bag = [];
-    this._queue = []; // pre-filled upcoming pieces
+    this._queue = []; // upcoming pieces in FIFO order
+  }
+
+  /**
+   * Ensure the queue has at least `count` upcoming pieces.
+   * Refills and reshuffles the bag as needed, moving one piece
+   * at a time from _bag into _queue.
+   * @param {number} count
+   */
+  _ensureQueue(count) {
+    while (this._queue.length < count) {
+      if (this._bag.length === 0) {
+        this._refill();
+      }
+      this._queue.push(this._bag.pop());
+    }
   }
 
   /**
    * Return the next tetromino name from the 7-bag system.
-   * Refills and reshuffles the bag when empty.
+   * Consumes the first item from the upcoming queue.
    * @returns {string} Tetromino name.
    */
   next() {
-    if (this._bag.length === 0) {
-      this._refill();
-    }
-    return this._bag.pop();
+    this._ensureQueue(1);
+    return this._queue.shift();
   }
 
   /**
@@ -223,12 +236,7 @@ export class BagRandomizer {
    * @returns {string[]} Array of tetromino names.
    */
   peek(count = 1) {
-    while (this._queue.length < count) {
-      if (this._bag.length === 0) {
-        this._refill();
-      }
-      this._queue.push(this._bag.pop());
-    }
+    this._ensureQueue(count);
     return this._queue.slice(0, count);
   }
 
@@ -248,10 +256,6 @@ export class BagRandomizer {
       [keys[i], keys[j]] = [keys[j], keys[i]];
     }
     this._bag = keys.slice();
-    // Drain the bag into the queue so peek can access them
-    while (this._bag.length > 0) {
-      this._queue.push(this._bag.pop());
-    }
   }
 }
 
