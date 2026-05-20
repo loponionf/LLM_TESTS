@@ -1,4 +1,5 @@
 import { CELL_SIZE } from './constants.js';
+import { getTetromino } from './pieces.js';
 
 /**
  * Draw a single filled cell on the given 2D context.
@@ -141,6 +142,56 @@ export function renderNextPiece(canvas, piece) {
  */
 export function renderHoldPiece(canvas, piece) {
   renderNextPiece(canvas, piece);
+}
+
+/**
+ * Render multiple upcoming pieces stacked vertically on the next-piece canvas.
+ * @param {HTMLCanvasElement} canvas
+ * @param {string[]} pieceNames - Array of tetromino names (e.g. ['T', 'I', 'S']).
+ */
+export function renderNextQueue(canvas, pieceNames) {
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (!pieceNames || pieceNames.length === 0) return;
+
+  // Use a smaller cell size for the queue preview
+  const qCellSize = 14;
+
+  for (let i = 0; i < pieceNames.length; i++) {
+    const tet = getTetromino(pieceNames[i]);
+    if (!tet) continue;
+
+    const shape = tet.shapes[0];
+    const rows = shape.length;
+    const cols = shape[0].length;
+
+    // Center horizontally, stack vertically with spacing
+    const offsetX = Math.floor((canvas.width / qCellSize - cols) / 2);
+    const offsetY = i * (rows + 1) + Math.floor((canvas.height / qCellSize - (pieceNames.length * (rows + 1))) / 2);
+
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        if (!shape[r][c]) continue;
+        const px = (offsetX + c) * qCellSize;
+        const py = (offsetY + r) * qCellSize;
+        const inset = 1;
+
+        ctx.fillStyle = tet.color;
+        ctx.fillRect(px + inset, py + inset, qCellSize - inset * 2, qCellSize - inset * 2);
+
+        // Top-left highlight
+        ctx.fillStyle = 'rgba(255,255,255,0.18)';
+        ctx.fillRect(px + inset, py + inset, qCellSize - inset * 2, 2);
+        ctx.fillRect(px + inset, py + inset, 2, qCellSize - inset * 2);
+
+        // Bottom-right shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.25)';
+        ctx.fillRect(px + inset, py + qCellSize - inset - 2, qCellSize - inset * 2, 2);
+        ctx.fillRect(px + qCellSize - inset - 2, py + inset, 2, qCellSize - inset * 2);
+      }
+    }
+  }
 }
 
 export function updateHUD(scoreEl, levelEl, linesEl, bestEl, state) {

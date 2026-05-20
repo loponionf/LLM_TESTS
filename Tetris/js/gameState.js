@@ -1,5 +1,5 @@
 import { BOARD_WIDTH, SCORING, INITIAL_LEVEL, LINES_PER_LEVEL } from './constants.js';
-import { getRandomTetromino, getTetromino } from './pieces.js';
+import { getRandomTetromino, getTetromino, randomizer } from './pieces.js';
 
 const BEST_SCORE_KEY = 'tetris.bestScore';
 
@@ -49,7 +49,12 @@ export function resetBestScore(state) {
  */
 
 /**
- * Spawn a piece at the top-center of the board.
+ * Number of upcoming pieces to keep in the queue for display.
+ */
+const NEXT_QUEUE_SIZE = 5;
+
+/**
+ * Spawn a piece at the top-center of the board from the next name in the bag.
  * @returns {object} { name, color, shape, x, y }
  */
 export function spawnPiece() {
@@ -61,10 +66,47 @@ export function spawnPiece() {
 }
 
 /**
+ * Get the next N upcoming piece names from the bag randomizer without consuming them.
+ * @param {number} count - How many to peek.
+ * @returns {string[]} Array of tetromino names.
+ */
+export function getNextQueue(count = NEXT_QUEUE_SIZE) {
+  return randomizer.peek(count);
+}
+
+/**
+ * Return the visible next queue: state.nextPiece first, then enough
+ * randomizer.peek() items to reach `count` total. This ensures the
+ * displayed queue starts with the piece that will actually spawn next.
+ * @param {object} state - Game state object.
+ * @param {number} count - How many pieces to display.
+ * @returns {string[]} Array of tetromino names.
+ */
+export function getVisibleNextQueue(state, count = NEXT_QUEUE_SIZE) {
+  const result = [];
+  if (state.nextPiece) {
+    result.push(state.nextPiece.name);
+  }
+  const needed = count - result.length;
+  if (needed > 0) {
+    result.push(...randomizer.peek(needed));
+  }
+  return result;
+}
+
+/**
+ * Reset the bag randomizer so restart starts fresh.
+ */
+export function resetRandomizer() {
+  randomizer.reset();
+}
+
+/**
  * Create a fresh game state.
  * @returns {object}
  */
 export function createInitialState(bestScore) {
+  resetRandomizer();
   const active = spawnPiece();
   const next = spawnPiece();
   return {
@@ -84,6 +126,7 @@ export function createInitialState(bestScore) {
 
 /**
  * Reset / restart the game state.
+ * Resets the bag randomizer so the next game starts fresh.
  * @returns {object} Fresh game state.
  */
 export function resetGameState(state) {

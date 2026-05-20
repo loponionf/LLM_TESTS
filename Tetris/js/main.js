@@ -10,8 +10,9 @@ import {
   resetHold,
   clearReady,
   setReady,
+  getVisibleNextQueue,
 } from './gameState.js';
-import { renderBoard, renderNextPiece, renderHoldPiece, updateHUD } from './renderer.js';
+import { renderBoard, renderNextPiece, renderHoldPiece, renderNextQueue, updateHUD } from './renderer.js';
 import { setupInputHandlers } from './input.js';
 import {
   moveLeft,
@@ -50,7 +51,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const ghost = computeGhostPosition(board, state);
     renderBoard(boardEl, board, state.activePiece, ghost);
     renderHoldPiece(holdPieceEl, state.heldPiece);
-    renderNextPiece(nextPieceEl, state.nextPiece);
+    // Render the visible next queue starting with state.nextPiece
+    const nextQueue = getVisibleNextQueue(state, 5);
+    renderNextQueue(nextPieceEl, nextQueue);
     updateHUD(scoreEl, levelEl, linesEl, bestEl, state);
 
     // Show game over overlay if applicable
