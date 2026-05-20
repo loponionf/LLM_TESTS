@@ -10,7 +10,7 @@ import {
   resetHold,
   clearReady,
   setReady,
-  getNextQueue,
+  getVisibleNextQueue,
 } from './gameState.js';
 import { renderBoard, renderNextPiece, renderHoldPiece, renderNextQueue, updateHUD } from './renderer.js';
 import { setupInputHandlers } from './input.js';
@@ -51,8 +51,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const ghost = computeGhostPosition(board, state);
     renderBoard(boardEl, board, state.activePiece, ghost);
     renderHoldPiece(holdPieceEl, state.heldPiece);
-    // Render the next queue (5 upcoming pieces) from the bag randomizer
-    const nextQueue = getNextQueue(5);
+    // Render the visible next queue starting with state.nextPiece
+    const nextQueue = getVisibleNextQueue(state, 5);
     renderNextQueue(nextPieceEl, nextQueue);
     updateHUD(scoreEl, levelEl, linesEl, bestEl, state);
 

@@ -75,6 +75,26 @@ export function getNextQueue(count = NEXT_QUEUE_SIZE) {
 }
 
 /**
+ * Return the visible next queue: state.nextPiece first, then enough
+ * randomizer.peek() items to reach `count` total. This ensures the
+ * displayed queue starts with the piece that will actually spawn next.
+ * @param {object} state - Game state object.
+ * @param {number} count - How many pieces to display.
+ * @returns {string[]} Array of tetromino names.
+ */
+export function getVisibleNextQueue(state, count = NEXT_QUEUE_SIZE) {
+  const result = [];
+  if (state.nextPiece) {
+    result.push(state.nextPiece.name);
+  }
+  const needed = count - result.length;
+  if (needed > 0) {
+    result.push(...randomizer.peek(needed));
+  }
+  return result;
+}
+
+/**
  * Reset the bag randomizer so restart starts fresh.
  */
 export function resetRandomizer() {

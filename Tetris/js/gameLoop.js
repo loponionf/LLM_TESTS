@@ -6,7 +6,7 @@ import {
 import { isValidPosition, lockPiece as lockPieceBoard, clearLines } from './board.js';
 import { getTetromino } from './pieces.js';
 import { getRandomTetromino } from './pieces.js';
-import { applyLineClear, setActivePiece, setNextPiece, setGameOver, resetHold, getNextQueue } from './gameState.js';
+import { applyLineClear, setActivePiece, setNextPiece, setGameOver, resetHold } from './gameState.js';
 
 /**
  * Movement helpers for the active piece.
