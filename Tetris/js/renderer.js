@@ -1,4 +1,5 @@
 import { CELL_SIZE } from './constants.js';
+import { getTetromino } from './pieces.js';
 
 /**
  * Draw a single filled cell on the given 2D context.
